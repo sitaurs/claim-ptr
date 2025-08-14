@@ -1,0 +1,210 @@
+<%- include('_head', { title: 'Kelola Promosi', active: 'promotions' }) %>
+<%- include('_flash', { success: success, error: error }) %>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+  <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center">
+    <h3 class="font-semibold">Tambah Promosi Baru</h3>
+  </div>
+  <div class="p-4">
+    <form id="addPromotionForm" action="/api/promotions" method="POST" class="space-y-4">
+      <input type="hidden" name="groupId" value="<%= groupId || '' %>">
+      <div>
+        <label for="message" class="block text-gray-700 font-medium mb-2">Pesan Promosi</label>
+        <textarea id="message" name="message" rows="4" placeholder="Masukkan pesan promosi" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="intervalMinutes" class="block text-gray-700 font-medium mb-2">Interval (menit)</label>
+          <input type="number" id="intervalMinutes" name="intervalMinutes" min="1" placeholder="Interval pengiriman dalam menit" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        </div>
+      </div>
+      <div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">Tambah Promosi</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+  <div class="bg-blue-600 text-white px-4 py-2">
+    <h3 class="font-semibold">Daftar Promosi</h3>
+  </div>
+  <div class="p-4">
+    <% if (promotions && promotions.length > 0) { %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr class="border-b">
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">ID</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Pesan</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Interval</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Status</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tanggal Dibuat</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% promotions.forEach(function(promotion) { %>
+              <tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-2 text-sm"><%= promotion.id || '-' %></td>
+                <td class="px-4 py-2 text-sm"><%= promotion.message.length > 50 ? promotion.message.substring(0, 50) + '...' : promotion.message %></td>
+                <td class="px-4 py-2 text-sm"><%= promotion.intervalMinutes || promotion.interval || '-' %> menit</td>
+                <td class="px-4 py-2 text-sm">
+                  <span class="px-2 py-1 rounded-full text-xs <%= promotion.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                    <%= promotion.active ? 'Aktif' : 'Tidak Aktif' %>
+                  </span>
+                </td>
+                <td class="px-4 py-2 text-sm"><%= promotion.createdAt ? new Date(promotion.createdAt).toLocaleDateString('id-ID') : '-' %></td>
+                <td class="px-4 py-2 text-sm">
+                  <div class="flex space-x-2">
+                    <button 
+                      type="button" 
+                      class="px-2 py-1 rounded text-xs <%= promotion.active ? 'bg-red-100 text-red-800 hover:bg-red-200' : 'bg-green-100 text-green-800 hover:bg-green-200' %> transition btn-toggle"
+                      data-id="<%= promotion.id %>"
+                    >
+                      <%= promotion.active ? 'Nonaktifkan' : 'Aktifkan' %>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="px-2 py-1 rounded text-xs bg-red-100 text-red-800 hover:bg-red-200 transition btn-delete"
+                      data-id="<%= promotion.id %>"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p class="text-gray-500 text-center py-4">Belum ada promosi yang ditambahkan</p>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  document.getElementById('addPromotionForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    const payload = Object.fromEntries(formData.entries());
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = '/admin/promotions?success=' + encodeURIComponent('Promosi ditambahkan');
+      } else {
+        alert(data.message || 'Gagal menambahkan promosi');
+      }
+    } catch (err) { alert(err.message); }
+  });
+
+  document.querySelectorAll('.btn-toggle').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      try {
+        const res = await fetch('/api/promotions/' + id + '/toggle', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) location.reload(); else alert(data.message || 'Gagal mengubah status');
+      } catch (e) { alert(e.message); }
+    });
+  });
+
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (!confirm('Apakah Anda yakin ingin menghapus promosi ini?')) return;
+      try {
+        const res = await fetch('/api/promotions/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) location.reload(); else alert(data.message || 'Gagal menghapus');
+      } catch (e) { alert(e.message); }
+    });
+  });
+</script>
+
+<%- include('_foot') %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Toggle promotion status
+  document.querySelectorAll('.btn-toggle').forEach(button => {
+    button.addEventListener('click', async function() {
+      const id = this.dataset.id;
+      const isActive = this.textContent.trim() === 'Nonaktifkan';
+      
+      try {
+        const response = await fetch(`/api/promotions/${id}/toggle`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ active: !isActive })
+        });
+        
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert('Gagal mengubah status promosi');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan');
+      }
+    });
+  });
+  
+  // Delete promotion
+  document.querySelectorAll('.btn-delete').forEach(button => {
+    button.addEventListener('click', async function() {
+      const id = this.dataset.id;
+      
+      if (confirm('Yakin ingin menghapus promosi ini?')) {
+        try {
+          const response = await fetch(`/api/promotions/${id}`, {
+            method: 'DELETE'
+          });
+          
+          if (response.ok) {
+            location.reload();
+          } else {
+            alert('Gagal menghapus promosi');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('Terjadi kesalahan');
+        }
+      }
+    });
+  });
+  
+  // Add promotion form
+  document.getElementById('addPromotionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    try {
+      const response = await fetch('/api/promotions', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Gagal menambahkan promosi');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Terjadi kesalahan');
+    }
+  });
+});
+</script>

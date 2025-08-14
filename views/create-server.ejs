@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buat Server - MOOTERACT HUB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="bg-blue-600 text-white shadow-md">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">MOOTERACT HUB</h1>
+        <nav>
+          <ul class="flex space-x-6">
+            <li><a href="/" class="hover:text-blue-200 transition">Beranda</a></li>
+            <li><a href="/claim" class="hover:text-blue-200 transition">Klaim Server</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-12">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="bg-blue-600 text-white py-4 px-6">
+        <h2 class="text-2xl font-bold">Buat Server</h2>
+        <p class="text-blue-100">Langkah 4: Pilih Jenis Server</p>
+      </div>
+      
+      <div class="p-6">
+        <p class="text-gray-600 mb-6">Pilih jenis server yang ingin Anda gunakan.</p>
+        
+        <form id="serverForm" class="space-y-4">
+          <input type="hidden" id="phoneNumber" value="<%= phone %>">
+          <input type="hidden" id="email" value="<%= email %>">
+          
+          <div>
+            <label for="serverName" class="block text-gray-700 font-medium mb-2">Nama Server</label>
+            <input 
+              type="text" 
+              id="serverName" 
+              name="serverName" 
+              placeholder="Masukkan nama server" 
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+          
+          <div>
+            <label class="block text-gray-700 font-medium mb-2">Jenis Server</label>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition server-option" data-type="nodejs">
+                <div class="text-center mb-2">🚀</div>
+                <h3 class="font-semibold text-center">Node.js</h3>
+              </div>
+              
+              <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition server-option" data-type="python">
+                <div class="text-center mb-2">🐍</div>
+                <h3 class="font-semibold text-center">Python</h3>
+              </div>
+              
+              <div class="border rounded-lg p-4 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition server-option" data-type="n8n">
+                <div class="text-center mb-2">⚙️</div>
+                <h3 class="font-semibold text-center">N8n</h3>
+              </div>
+            </div>
+            
+            <input type="hidden" id="serverType" name="serverType" required>
+          </div>
+          
+          <div>
+            <button 
+              type="submit" 
+              id="createServerBtn"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+              disabled
+            >
+              Buat Server
+            </button>
+          </div>
+        </form>
+        
+        <div id="loadingIndicator" class="hidden mt-4 text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-gray-600">Membuat server Anda...</p>
+        </div>
+        
+        <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-800 text-white py-8 mt-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <h2 class="text-2xl font-bold">MOOTERACT HUB</h2>
+          <p class="text-gray-400">Platform untuk klaim server gratis</p>
+        </div>
+        <div>
+          <p>&copy; <%= new Date().getFullYear() %> MOOTERACT HUB. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modal untuk N8n -->
+  <div id="n8nModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+      <h3 class="text-xl font-bold mb-4">Request Server N8n</h3>
+      <p class="text-gray-600 mb-4">Server N8n memerlukan persetujuan admin. Silakan isi alasan Anda membutuhkan server N8n.</p>
+      
+      <form id="n8nRequestForm" class="space-y-4">
+        <div>
+          <label for="n8nReason" class="block text-gray-700 font-medium mb-2">Alasan</label>
+          <textarea 
+            id="n8nReason" 
+            name="n8nReason" 
+            placeholder="Jelaskan alasan Anda membutuhkan server N8n" 
+            class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-32"
+            required
+          ></textarea>
+        </div>
+        
+        <div class="flex justify-end space-x-3">
+          <button 
+            type="button" 
+            id="cancelN8nBtn"
+            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
+          >
+            Batal
+          </button>
+          
+          <button 
+            type="submit" 
+            id="submitN8nBtn"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+          >
+            Kirim Permintaan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Handle server option selection
+    const serverOptions = document.querySelectorAll('.server-option');
+    const serverTypeInput = document.getElementById('serverType');
+    const createServerBtn = document.getElementById('createServerBtn');
+    const n8nModal = document.getElementById('n8nModal');
+    
+    serverOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        // Remove active class from all options
+        serverOptions.forEach(opt => {
+          opt.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+        
+        // Add active class to selected option
+        this.classList.add('border-blue-500', 'bg-blue-50');
+        
+        // Set server type
+        const serverType = this.getAttribute('data-type');
+        serverTypeInput.value = serverType;
+        
+        // Enable create button
+        createServerBtn.disabled = false;
+      });
+    });
+    
+    // Handle server form submission
+    document.getElementById('serverForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      const email = document.getElementById('email').value;
+      const serverName = document.getElementById('serverName').value;
+      const serverType = document.getElementById('serverType').value;
+      
+      // Get query parameters for account details
+      const urlParams = new URLSearchParams(window.location.search);
+      const firstName = urlParams.get('firstName');
+      const lastName = urlParams.get('lastName');
+      const password = urlParams.get('password');
+      
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const errorMessage = document.getElementById('errorMessage');
+      
+      // If N8n is selected, show the modal
+      if (serverType === 'n8n') {
+        n8nModal.classList.remove('hidden');
+        return;
+      }
+      
+      // Sembunyikan pesan error jika ada
+      errorMessage.classList.add('hidden');
+      
+      // Tampilkan loading
+      loadingIndicator.classList.remove('hidden');
+      createServerBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/create-account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phoneNumber,
+            email,
+            firstName,
+            lastName,
+            password,
+            serverName,
+            serverType
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Redirect ke halaman sukses
+          window.location.href = `/success?email=${encodeURIComponent(email)}&server=${encodeURIComponent(serverName)}&type=${serverType}&panel=${encodeURIComponent(data.panelUrl)}`;
+        } else {
+          // Tampilkan pesan error
+          errorMessage.textContent = data.message || 'Gagal membuat server. Silakan coba lagi.';
+          errorMessage.classList.remove('hidden');
+          createServerBtn.disabled = false;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'Terjadi kesalahan. Silakan coba lagi nanti.';
+        errorMessage.classList.remove('hidden');
+        createServerBtn.disabled = false;
+      } finally {
+        // Sembunyikan loading
+        loadingIndicator.classList.add('hidden');
+      }
+    });
+    
+    // Handle N8n request form
+    document.getElementById('n8nRequestForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      const email = document.getElementById('email').value;
+      const name = document.getElementById('serverName').value;
+      const reason = document.getElementById('n8nReason').value;
+      
+      const submitN8nBtn = document.getElementById('submitN8nBtn');
+      submitN8nBtn.disabled = true;
+      submitN8nBtn.textContent = 'Mengirim...';
+      
+      try {
+        const response = await fetch('/api/request-n8n', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            phoneNumber,
+            email,
+            name,
+            reason
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Redirect ke halaman sukses dengan pesan khusus
+          window.location.href = `/success?email=${encodeURIComponent(email)}&server=${encodeURIComponent(name)}&type=n8n&panel=pending`;
+        } else {
+          // Tampilkan pesan error
+          const errorMessage = document.getElementById('errorMessage');
+          errorMessage.textContent = data.message || 'Gagal mengirim permintaan. Silakan coba lagi.';
+          errorMessage.classList.remove('hidden');
+          n8nModal.classList.add('hidden');
+          submitN8nBtn.disabled = false;
+          submitN8nBtn.textContent = 'Kirim Permintaan';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = 'Terjadi kesalahan. Silakan coba lagi nanti.';
+        errorMessage.classList.remove('hidden');
+        n8nModal.classList.add('hidden');
+        submitN8nBtn.disabled = false;
+        submitN8nBtn.textContent = 'Kirim Permintaan';
+      }
+    });
+    
+    // Handle cancel N8n request
+    document.getElementById('cancelN8nBtn').addEventListener('click', function() {
+      n8nModal.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+/* Main Styles */
+body {
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  line-height: 1.6;
+}
+
+/* Custom Animations */
+.success-animation {
+  animation: success-pulse 2s infinite;
+}
+
+@keyframes success-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Custom Form Styles */
+.otp-input {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+  text-align: center;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.otp-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Custom Button Styles */
+.btn-primary {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.btn-primary:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+/* Custom Card Styles */
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.card-header {
+  background-color: #3b82f6;
+  color: white;
+  padding: 1rem;
+}
+
+.card-body {
+  padding: 1.5rem;
+}
+
+/* Custom Alert Styles */
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.alert-error {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Custom Table Styles */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Custom Badge Styles */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-danger {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Responsive Utilities */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .otp-input {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.25rem;
+  }
+}

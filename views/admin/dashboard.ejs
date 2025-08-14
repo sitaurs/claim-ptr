@@ -1,0 +1,151 @@
+<%- include('_head', { title: 'Dashboard' }) %>
+
+<div class="min-h-screen bg-gray-100">
+  <!-- Navigation -->
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <h1 class="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
+        <div class="space-x-4">
+          <a href="/admin/dashboard" class="text-blue-600 font-medium">Dashboard</a>
+          <a href="/admin/users" class="text-gray-600 hover:text-gray-900">Users</a>
+          <a href="/admin/requests" class="text-gray-600 hover:text-gray-900">Requests</a>
+          <a href="/admin/promotions" class="text-gray-600 hover:text-gray-900">Promotions</a>
+          <a href="/admin/n8n-requests" class="text-gray-600 hover:text-gray-900">N8N</a>
+          <a href="/admin/server-templates" class="text-gray-600 hover:text-gray-900">Templates</a>
+          <a href="/admin/config" class="text-gray-600 hover:text-gray-900">Config</a>
+          <a href="/admin/logout" class="text-red-600 hover:text-red-800">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  <%- include('_flash') %>
+
+  <!-- Main content -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Total Pengguna -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm">Total Pengguna</p>
+            <h3 class="text-3xl font-bold"><%= userCount || 0 %></h3>
+          </div>
+          <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Total Server -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm">Total Server</p>
+            <h3 class="text-3xl font-bold"><%= serverCount || 0 %></h3>
+          </div>
+          <div class="bg-green-100 p-3 rounded-full text-green-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Permintaan N8n -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-gray-500 text-sm">Permintaan N8n</p>
+            <h3 class="text-3xl font-bold"><%= n8nRequestCount || 0 %></h3>
+          </div>
+          <div class="bg-yellow-100 p-3 rounded-full text-yellow-600">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Server Terbaru -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-blue-600 text-white px-4 py-2">
+          <h3 class="font-semibold">Server Terbaru</h3>
+        </div>
+        <div class="p-4">
+          <% if (latestServers && latestServers.length > 0) { %>
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="border-b">
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Nama</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Jenis</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Pengguna</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tanggal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% latestServers.forEach(server => { %>
+                    <tr class="border-b hover:bg-gray-50">
+                      <td class="px-4 py-2 text-sm"><%= server.name %></td>
+                      <td class="px-4 py-2 text-sm">
+                        <span class="px-2 py-1 rounded-full text-xs <%= server.type === 'nodejs' ? 'bg-green-100 text-green-800' : server.type === 'python' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800' %>">
+                          <%= server.type %>
+                        </span>
+                      </td>
+                      <td class="px-4 py-2 text-sm"><%= server.owner %></td>
+                      <td class="px-4 py-2 text-sm"><%= new Date(server.createdAt).toLocaleDateString('id-ID') %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <p class="text-gray-500 text-center py-4">Belum ada server yang dibuat</p>
+          <% } %>
+        </div>
+      </div>
+      
+      <!-- Pengguna Terbaru -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-blue-600 text-white px-4 py-2">
+          <h3 class="font-semibold">Pengguna Terbaru</h3>
+        </div>
+        <div class="p-4">
+          <% if (latestUsers && latestUsers.length > 0) { %>
+            <div class="overflow-x-auto">
+              <table class="min-w-full">
+                <thead>
+                  <tr class="border-b">
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Nama</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Email</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">WhatsApp</th>
+                    <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tanggal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% latestUsers.forEach(user => { %>
+                    <tr class="border-b hover:bg-gray-50">
+                      <td class="px-4 py-2 text-sm"><%= user.firstName %> <%= user.lastName %></td>
+                      <td class="px-4 py-2 text-sm"><%= user.email %></td>
+                      <td class="px-4 py-2 text-sm"><%= user.phoneNumber %></td>
+                      <td class="px-4 py-2 text-sm"><%= new Date(user.createdAt).toLocaleDateString('id-ID') %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <p class="text-gray-500 text-center py-4">Belum ada pengguna yang terdaftar</p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('_foot') %>

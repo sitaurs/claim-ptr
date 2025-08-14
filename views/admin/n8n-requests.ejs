@@ -1,0 +1,160 @@
+<%- include('_head', { title: 'N8N Requests', active: 'n8n-requests' }) %>
+<%- include('_flash', { success: success, error: error }) %>
+
+<div class="bg-white rounded-lg shadow-md overflow-hidden">
+  <div class="bg-blue-600 text-white px-4 py-2 flex justify-between items-center">
+    <h3 class="font-semibold">N8N Requests Log</h3>
+    <div class="flex space-x-2">
+      <button id="refreshBtn" class="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1 rounded text-sm transition">
+        Refresh
+      </button>
+      <button id="clearBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition">
+        Clear All
+      </button>
+    </div>
+  </div>
+  <div class="p-4">
+    <% if (requests && requests.length > 0) { %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr class="border-b">
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Timestamp</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Method</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">URL</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Status</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Body</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Response</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% requests.forEach(function(request) { %>
+              <tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-2 text-sm">
+                  <%= request.timestamp ? new Date(request.timestamp).toLocaleString('id-ID') : '-' %>
+                </td>
+                <td class="px-4 py-2 text-sm">
+                  <span class="px-2 py-1 rounded text-xs <%= request.method === 'POST' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' %>">
+                    <%= request.method || 'GET' %>
+                  </span>
+                </td>
+                <td class="px-4 py-2 text-sm font-mono text-xs">
+                  <%= request.url || '-' %>
+                </td>
+                <td class="px-4 py-2 text-sm">
+                  <% if (request.status) { %>
+                    <span class="px-2 py-1 rounded text-xs <%= request.status >= 200 && request.status < 300 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                      <%= request.status %>
+                    </span>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td class="px-4 py-2 text-sm">
+                  <% if (request.body) { %>
+                    <button 
+                      type="button" 
+                      class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 hover:bg-gray-200 transition show-json"
+                      data-json="<%= encodeURIComponent(JSON.stringify(request.body, null, 2)) %>"
+                    >
+                      View
+                    </button>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+                <td class="px-4 py-2 text-sm">
+                  <% if (request.response) { %>
+                    <button 
+                      type="button" 
+                      class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 hover:bg-gray-200 transition show-json"
+                      data-json="<%= encodeURIComponent(JSON.stringify(request.response, null, 2)) %>"
+                    >
+                      View
+                    </button>
+                  <% } else { %>
+                    -
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } else { %>
+      <p class="text-gray-500 text-center py-4">Belum ada request yang tercatat</p>
+    <% } %>
+  </div>
+</div>
+
+<!-- JSON Modal -->
+<div id="jsonModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-4xl max-h-[80vh] w-full mx-4 overflow-hidden">
+    <div class="flex justify-between items-center p-4 border-b">
+      <h4 class="text-lg font-semibold">JSON Data</h4>
+      <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-4 overflow-auto max-h-96">
+      <pre id="jsonContent" class="bg-gray-100 p-4 rounded text-sm overflow-auto"></pre>
+    </div>
+  </div>
+</div>
+
+<%- include('_foot') %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Refresh button
+  document.getElementById('refreshBtn').addEventListener('click', function() {
+    location.reload();
+  });
+  
+  // Clear all button
+  document.getElementById('clearBtn').addEventListener('click', async function() {
+    if (confirm('Yakin ingin menghapus semua request log?')) {
+      try {
+        const response = await fetch('/api/n8n-requests', {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert('Gagal menghapus request log');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan');
+      }
+    }
+  });
+  
+  // Show JSON modal
+  document.querySelectorAll('.show-json').forEach(button => {
+    button.addEventListener('click', function() {
+      const jsonData = decodeURIComponent(this.dataset.json);
+      document.getElementById('jsonContent').textContent = jsonData;
+      document.getElementById('jsonModal').classList.remove('hidden');
+      document.getElementById('jsonModal').classList.add('flex');
+    });
+  });
+  
+  // Close modal
+  document.getElementById('closeModal').addEventListener('click', function() {
+    document.getElementById('jsonModal').classList.add('hidden');
+    document.getElementById('jsonModal').classList.remove('flex');
+  });
+  
+  // Close modal on backdrop click
+  document.getElementById('jsonModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.add('hidden');
+      this.classList.remove('flex');
+    }
+  });
+});
+</script>

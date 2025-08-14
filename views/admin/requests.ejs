@@ -1,0 +1,161 @@
+<%- include('_head', { title: 'JSON Requests', active: 'requests' }) %>
+<%- include('_flash', { success: success, error: error }) %>
+
+<div class="bg-white rounded-lg shadow-md p-4">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold">Daftar Request JSON</h3>
+    <div class="space-x-2">
+      <button id="refreshBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-3 py-2 rounded">Refresh</button>
+      <button id="sendAllNotifications" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-3 py-2 rounded">Kirim Semua ke WhatsApp</button>
+      <button id="markAllProcessed" class="bg-green-600 hover:bg-green-700 text-white font-medium px-3 py-2 rounded">Tandai Semua Diproses</button>
+      <button id="clearAllRequests" class="bg-red-600 hover:bg-red-700 text-white font-medium px-3 py-2 rounded">Hapus Semua</button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm" id="requestsTable">
+      <thead>
+        <tr class="border-b bg-gray-50 text-gray-600">
+          <th class="px-3 py-2 text-left">ID</th>
+          <th class="px-3 py-2 text-left">Nama</th>
+          <th class="px-3 py-2 text-left">Email</th>
+          <th class="px-3 py-2 text-left">WhatsApp</th>
+          <th class="px-3 py-2 text-left">Tipe Server</th>
+          <th class="px-3 py-2 text-left">Tanggal</th>
+          <th class="px-3 py-2 text-left">Status</th>
+          <th class="px-3 py-2 text-left">Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="requestsBody">
+        <% (requests || []).forEach(function(request) { %>
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-3 py-2"><%= request.id %></td>
+            <td class="px-3 py-2"><%= request.name %></td>
+            <td class="px-3 py-2"><%= request.email %></td>
+            <td class="px-3 py-2"><%= request.whatsapp %></td>
+            <td class="px-3 py-2"><%= request.serverType %></td>
+            <td class="px-3 py-2"><%= new Date(request.createdAt).toLocaleString('id-ID') %></td>
+            <td class="px-3 py-2">
+              <span class="px-2 py-1 rounded-full text-xs <%= request.processed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                <%= request.processed ? 'Diproses' : 'Menunggu' %>
+              </span>
+            </td>
+            <td class="px-3 py-2">
+              <div class="flex items-center gap-2">
+                <button class="view-request bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs" data-id="<%= request.id %>">Lihat</button>
+                <% if (!request.processed) { %>
+                  <button class="process-request bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs" data-id="<%= request.id %>">Proses</button>
+                <% } %>
+                <button class="send-notification bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs" data-id="<%= request.id %>">Notif</button>
+                <button class="delete-request bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs" data-id="<%= request.id %>">Hapus</button>
+              </div>
+            </td>
+          </tr>
+          <tr class="hidden bg-gray-50" id="details-<%= request.id %>">
+            <td colspan="8" class="px-3 py-2">
+              <pre class="text-xs whitespace-pre-wrap"><%= JSON.stringify(request, null, 2) %></pre>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+            </td>
+
+<script>
+  // Toggle view details
+  document.querySelectorAll('.view-request').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      const row = document.getElementById('details-' + id);
+      if (row.classList.contains('hidden')) {
+        // refresh details from API
+        try {
+          const res = await fetch('/admin/api/' + id);
+          const data = await res.json();
+          if (data.success) {
+            row.querySelector('pre').textContent = JSON.stringify(data.request, null, 2);
+          }
+        } catch (e) {}
+      }
+      row.classList.toggle('hidden');
+    });
+  });
+
+  // Process single
+  document.querySelectorAll('.process-request').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (!confirm('Tandai request ini sebagai diproses?')) return;
+      try {
+        const res = await fetch('/admin/api/' + id + '/status', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ processed: true })
+        });
+        const data = await res.json();
+        if (data.success) location.reload(); else alert(data.message || 'Gagal memproses');
+      } catch (e) { alert(e.message); }
+    });
+  });
+
+  // Notify single
+  document.querySelectorAll('.send-notification').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      try {
+        const res = await fetch('/admin/api/' + id + '/notify', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) alert('Notifikasi berhasil dikirim'); else alert(data.message || 'Gagal mengirim');
+      } catch (e) { alert(e.message); }
+    });
+  });
+
+  // Delete single
+  document.querySelectorAll('.delete-request').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (!confirm('Hapus request ini?')) return;
+      try {
+        const res = await fetch('/admin/api/' + id, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) location.reload(); else alert(data.message || 'Gagal menghapus');
+      } catch (e) { alert(e.message); }
+    });
+  });
+
+  // Bulk actions
+  document.getElementById('sendAllNotifications').addEventListener('click', async () => {
+    if (!confirm('Kirim notifikasi untuk semua request yang belum diproses?')) return;
+    try {
+      const res = await fetch('/admin/api/notify-all', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) alert(data.message || 'Berhasil'); else alert(data.message || 'Gagal');
+    } catch (e) { alert(e.message); }
+  });
+
+  document.getElementById('markAllProcessed').addEventListener('click', async () => {
+    if (!confirm('Tandai semua sebagai diproses?')) return;
+    try {
+      const res = await fetch('/admin/api/mark-all-processed', { method: 'PUT' });
+      const data = await res.json();
+      if (data.success) location.reload(); else alert(data.message || 'Gagal');
+    } catch (e) { alert(e.message); }
+  });
+
+  document.getElementById('clearAllRequests').addEventListener('click', async () => {
+    if (!confirm('PERINGATAN: Hapus semua request?')) return;
+    try {
+      const res = await fetch('/admin/api/clear-all', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) location.reload(); else alert(data.message || 'Gagal');
+    } catch (e) { alert(e.message); }
+  });
+
+  document.getElementById('refreshBtn').addEventListener('click', async () => {
+    location.reload();
+  });
+</script>
+
+<%- include('_foot') %>

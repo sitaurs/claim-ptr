@@ -1,0 +1,356 @@
+<%- include('layout', { title: 'Konfigurasi Template Server', active: 'server-templates', success: success, error: error, body: `
+
+<div class="container mx-auto px-4 py-8">
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-6">Konfigurasi Template Server</h1>
+    
+    <!-- Alert untuk pesan -->
+    \${success ? \`
+      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        \${success}
+      </div>
+    \` : ''}
+    
+    \${error ? \`
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        \${error}
+      </div>
+    \` : ''}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Node.js Template -->
+      <div class="bg-gray-50 rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4 text-green-600">🟢 Node.js Template</h2>
+        
+        <form action="/admin/template/nodejs" method="POST" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Egg ID</label>
+            <input 
+              type="number" 
+              name="egg" 
+              value="<%= config.server_templates.nodejs.egg %>" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
+            >
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Docker Image</label>
+            <input 
+              type="text" 
+              name="docker_image" 
+              value="<%= config.server_templates.nodejs.docker_image %>" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
+            >
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Startup Command</label>
+            <input 
+              type="text" 
+              name="startup" 
+              value="<%= config.server_templates.nodejs.startup %>" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+              required
+            >
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Memory (MB)</label>
+              <input 
+                type="number" 
+                name="memory" 
+                value="<%= config.server_templates.nodejs.limits.memory %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Disk (MB)</label>
+              <input 
+                type="number" 
+                name="disk" 
+                value="<%= config.server_templates.nodejs.limits.disk %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              >
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">CPU (%)</label>
+              <input 
+                type="number" 
+                name="cpu" 
+                value="<%= config.server_templates.nodejs.limits.cpu %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">IO</label>
+              <input 
+                type="number" 
+                name="io" 
+                value="<%= config.server_templates.nodejs.limits.io %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                required
+              >
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Environment Variables</label>
+            <div id="nodejs-env" class="space-y-2">
+              <% Object.entries(config.server_templates.nodejs.environment || {}).forEach(([key, value]) => { %>
+                <div class="flex gap-2">
+                  <input 
+                    type="text" 
+                    name="env_keys[]" 
+                    value="<%= key %>" 
+                    placeholder="Key" 
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                  <input 
+                    type="text" 
+                    name="env_values[]" 
+                    value="<%= value %>" 
+                    placeholder="Value" 
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                  <button type="button" onclick="removeEnvVar(this)" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                    ✕
+                  </button>
+                </div>
+              <% }) %>
+            </div>
+            <button type="button" onclick="addEnvVar('nodejs')" class="mt-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+              + Tambah Environment
+            </button>
+          </div>
+          
+          <div class="pt-4">
+            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-md transition">
+              💾 Simpan Template Node.js
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Python Template -->
+      <div class="bg-gray-50 rounded-lg p-6">
+        <h2 class="text-xl font-semibold mb-4 text-blue-600">🐍 Python Template</h2>
+        
+        <form action="/admin/template/python" method="POST" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Egg ID</label>
+            <input 
+              type="number" 
+              name="egg" 
+              value="<%= config.server_templates.python.egg %>" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Docker Image</label>
+            <input 
+              type="text" 
+              name="docker_image" 
+              value="<%= config.server_templates.python.docker_image %>" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Startup Command</label>
+            <input 
+              type="text" 
+              name="startup" 
+              value="<%= config.server_templates.python.startup %>" 
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Memory (MB)</label>
+              <input 
+                type="number" 
+                name="memory" 
+                value="<%= config.server_templates.python.limits.memory %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Disk (MB)</label>
+              <input 
+                type="number" 
+                name="disk" 
+                value="<%= config.server_templates.python.limits.disk %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+            </div>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">CPU (%)</label>
+              <input 
+                type="number" 
+                name="cpu" 
+                value="<%= config.server_templates.python.limits.cpu %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">IO</label>
+              <input 
+                type="number" 
+                name="io" 
+                value="<%= config.server_templates.python.limits.io %>" 
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              >
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Environment Variables</label>
+            <div id="python-env" class="space-y-2">
+              <% Object.entries(config.server_templates.python.environment || {}).forEach(([key, value]) => { %>
+                <div class="flex gap-2">
+                  <input 
+                    type="text" 
+                    name="env_keys[]" 
+                    value="<%= key %>" 
+                    placeholder="Key" 
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                  <input 
+                    type="text" 
+                    name="env_values[]" 
+                    value="<%= value %>" 
+                    placeholder="Value" 
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                  <button type="button" onclick="removeEnvVar(this)" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                    ✕
+                  </button>
+                </div>
+              <% }) %>
+            </div>
+            <button type="button" onclick="addEnvVar('python')" class="mt-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600">
+              + Tambah Environment
+            </button>
+          </div>
+          
+          <div class="pt-4">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition">
+              💾 Simpan Template Python
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Template Testing -->
+    <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-yellow-800 mb-4">🧪 Test Template</h3>
+      <p class="text-yellow-700 mb-4">Gunakan fitur ini untuk menguji template yang telah dikonfigurasi dengan membuat server test.</p>
+      <div class="flex gap-4">
+        <button onclick="testTemplate('nodejs')" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition">
+          Test Node.js Template
+        </button>
+        <button onclick="testTemplate('python')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition">
+          Test Python Template
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fungsi untuk menambah environment variable
+  function addEnvVar(type) {
+    const container = document.getElementById(`${type}-env`);
+    const newEnvDiv = document.createElement('div');
+    newEnvDiv.className = 'flex gap-2';
+    newEnvDiv.innerHTML = `
+      <input 
+        type="text" 
+        name="env_keys[]" 
+        placeholder="Key" 
+        class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-${type === 'nodejs' ? 'green' : 'blue'}-500"
+      >
+      <input 
+        type="text" 
+        name="env_values[]" 
+        placeholder="Value" 
+        class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-${type === 'nodejs' ? 'green' : 'blue'}-500"
+      >
+      <button type="button" onclick="removeEnvVar(this)" class="px-3 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+        ✕
+      </button>
+    `;
+    container.appendChild(newEnvDiv);
+  }
+
+  // Fungsi untuk menghapus environment variable
+  function removeEnvVar(button) {
+    button.parentElement.remove();
+  }
+
+  // Fungsi untuk test template
+  async function testTemplate(type) {
+    if (!confirm(`Apakah Anda yakin ingin menguji template ${type}? Ini akan membuat server test.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/admin/template/${type}/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(`Template ${type} berhasil diuji! Server test telah dibuat: ${result.serverId}`);
+      } else {
+        alert(`Error testing template: ${result.message}`);
+      }
+    } catch (error) {
+      alert(`Error: ${error.message}`);
+    }
+  }
+
+  // Auto-save on form change (optional)
+  document.querySelectorAll('form').forEach(form => {
+    const inputs = form.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('change', function() {
+        // Optional: Add unsaved changes indicator
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.textContent = submitBtn.textContent.replace('💾', '⚠️');
+          submitBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+          submitBtn.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-blue-600', 'hover:bg-blue-700');
+        }
+      });
+    });
+  });
+</script>
+
+` }) %>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Klaim Server - MOOTERACT HUB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="bg-blue-600 text-white shadow-md">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">MOOTERACT HUB</h1>
+        <nav>
+          <ul class="flex space-x-6">
+            <li><a href="/" class="hover:text-blue-200 transition">Beranda</a></li>
+            <li><a href="/claim" class="hover:text-blue-200 transition">Klaim Server</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-12">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="bg-blue-600 text-white py-4 px-6">
+        <h2 class="text-2xl font-bold">Klaim Server</h2>
+        <p class="text-blue-100">Langkah 1: Verifikasi Nomor WhatsApp</p>
+      </div>
+      
+      <div class="p-6">
+        <p class="text-gray-600 mb-6">Masukkan nomor WhatsApp Anda untuk menerima kode OTP verifikasi.</p>
+        
+        <form id="phoneForm" class="space-y-4">
+          <div>
+            <label for="phoneNumber" class="block text-gray-700 font-medium mb-2">Nomor WhatsApp</label>
+            <input 
+              type="text" 
+              id="phoneNumber" 
+              name="phoneNumber" 
+              placeholder="Contoh: 628123456789" 
+              class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            >
+            <p class="text-xs text-gray-500 mt-1">Format: 62 + nomor tanpa awalan 0. Contoh: 628123456789</p>
+          </div>
+          
+          <div>
+            <button 
+              type="submit" 
+              id="sendOtpBtn"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition"
+            >
+              Kirim Kode OTP
+            </button>
+          </div>
+        </form>
+        
+        <div id="loadingIndicator" class="hidden mt-4 text-center">
+          <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+          <p class="mt-2 text-gray-600">Mengirim kode OTP...</p>
+        </div>
+        
+        <div id="errorMessage" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded-lg"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-800 text-white py-8 mt-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <h2 class="text-2xl font-bold">MOOTERACT HUB</h2>
+          <p class="text-gray-400">Platform untuk klaim server gratis</p>
+        </div>
+        <div>
+          <p>&copy; <%= new Date().getFullYear() %> MOOTERACT HUB. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('phoneForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      const loadingIndicator = document.getElementById('loadingIndicator');
+      const errorMessage = document.getElementById('errorMessage');
+      const sendOtpBtn = document.getElementById('sendOtpBtn');
+      
+      // Validasi format nomor telepon
+      if (!phoneNumber.match(/^62\d{9,13}$/)) {
+        errorMessage.textContent = 'Format nomor tidak valid. Gunakan format 62 + nomor tanpa awalan 0.';
+        errorMessage.classList.remove('hidden');
+        return;
+      }
+      
+      // Sembunyikan pesan error jika ada
+      errorMessage.classList.add('hidden');
+      
+      // Tampilkan loading
+      loadingIndicator.classList.remove('hidden');
+      sendOtpBtn.disabled = true;
+      
+      try {
+        const response = await fetch('/api/send-otp', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ phoneNumber })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Redirect ke halaman verifikasi OTP
+          window.location.href = `/verify?phone=${phoneNumber}`;
+        } else {
+          // Tampilkan pesan error
+          errorMessage.textContent = data.message || 'Gagal mengirim OTP. Silakan coba lagi.';
+          errorMessage.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorMessage.textContent = 'Terjadi kesalahan. Silakan coba lagi nanti.';
+        errorMessage.classList.remove('hidden');
+      } finally {
+        // Sembunyikan loading
+        loadingIndicator.classList.add('hidden');
+        sendOtpBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

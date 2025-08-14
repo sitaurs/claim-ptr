@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Berhasil - MOOTERACT HUB</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+    }
+    .success-animation {
+      animation: success-pulse 2s infinite;
+    }
+    @keyframes success-pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="bg-blue-600 text-white shadow-md">
+    <div class="container mx-auto px-4 py-6">
+      <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold">MOOTERACT HUB</h1>
+        <nav>
+          <ul class="flex space-x-6">
+            <li><a href="/" class="hover:text-blue-200 transition">Beranda</a></li>
+            <li><a href="/claim" class="hover:text-blue-200 transition">Klaim Server</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-12">
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="bg-green-600 text-white py-4 px-6">
+        <h2 class="text-2xl font-bold">Berhasil!</h2>
+      </div>
+      
+      <div class="p-6 text-center">
+        <div class="text-green-500 text-7xl mb-6 success-animation">✓</div>
+        
+        <% if (type === 'n8n' && panel === 'pending') { %>
+          <h3 class="text-xl font-bold mb-4">Permintaan Server N8n Terkirim</h3>
+          <p class="text-gray-600 mb-6">Permintaan Anda untuk server N8n telah berhasil dikirim. Admin kami akan meninjau permintaan Anda dan menghubungi Anda melalui WhatsApp.</p>
+        <% } else { %>
+          <h3 class="text-xl font-bold mb-4">Server Berhasil Dibuat</h3>
+          <p class="text-gray-600 mb-6">Server <%= server %> (<%= type %>) telah berhasil dibuat. Detail akun telah dikirim ke WhatsApp Anda.</p>
+          
+          <div class="bg-gray-100 rounded-lg p-4 mb-6 text-left">
+            <h4 class="font-semibold mb-2">Detail Akun:</h4>
+            <p><strong>Email:</strong> <%= email %></p>
+            <p><strong>Panel:</strong> <a href="<%= panel %>" target="_blank" class="text-blue-600 hover:underline"><%= panel %></a></p>
+            <p class="text-sm text-gray-500 mt-2">Password telah dikirim ke WhatsApp Anda.</p>
+          </div>
+        <% } %>
+        
+        <div class="flex flex-col space-y-3">
+          <a href="/" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">
+            Kembali ke Beranda
+          </a>
+          
+          <% if (type !== 'n8n' || panel !== 'pending') { %>
+            <a href="<%= panel %>" target="_blank" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
+              Buka Panel Pterodactyl
+            </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-gray-800 text-white py-8 mt-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <h2 class="text-2xl font-bold">MOOTERACT HUB</h2>
+          <p class="text-gray-400">Platform untuk klaim server gratis</p>
+        </div>
+        <div>
+          <p>&copy; <%= new Date().getFullYear() %> MOOTERACT HUB. All rights reserved.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
