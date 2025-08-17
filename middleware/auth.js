@@ -23,8 +23,10 @@ const setupAdminSession = session({
   secret: process.env.ADMIN_SESSION_SECRET || config.server?.admin_session_secret || 'default_secret_key',
   resave: false,
   saveUninitialized: false,
-  cookie: { 
+  cookie: {
     secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
     maxAge: 24 * 60 * 60 * 1000 // 24 jam
   }
 });

@@ -146,6 +146,13 @@ const PORT = process.env.PORT || serverConfig.port || 3000;
 log('INFO', `Server will start on port: ${PORT}`);
 
 log('INFO', 'Setting up middleware...');
+
+// Trust proxy untuk production (di balik Nginx/reverse proxy)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+  log('INFO', 'Trust proxy enabled for production');
+}
+
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
