@@ -10,7 +10,8 @@
 
 # Data files
 /data/*.json
-/lexzy
+/LEXZY
+
 # Logs
 *.log
 logs/
