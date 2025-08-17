@@ -57,7 +57,7 @@ router.post('/verify-otp', async (req, res) => {
 // Endpoint untuk membuat akun dan server
 router.post('/create-account', async (req, res) => {
   try {
-    const { phoneNumber, email, password, firstName, lastName, serverName, serverType } = req.body;
+    const { phoneNumber, email, password, firstName, lastName, serverName, serverType, serverVersion } = req.body;
     
     // Validasi input
     if (!phoneNumber || !email || !password || !serverName || !serverType) {
@@ -75,7 +75,7 @@ router.post('/create-account', async (req, res) => {
     
     // Buat user dan server
     const userData = { phoneNumber, email, password, firstName, lastName };
-    const serverData = { name: serverName, type: serverType };
+    const serverData = { name: serverName, type: serverType, version: serverVersion };
     
     const result = await createUserAndServer(userData, serverData);
     
@@ -120,8 +120,7 @@ router.post('/request-n8n', async (req, res) => {
     
     // Kirim notifikasi WhatsApp ke admin
     try {
-      // Gunakan service baru untuk notifikasi yang lebih detail
-      const { sendMessage } = require('../whatsapp/bot');
+      const { sendMessage } = require('../services/whatsapp');
       await sendNewRequestNotification(newRequest, sendMessage);
     } catch (error) {
       console.error('Error mengirim notifikasi WhatsApp:', error);

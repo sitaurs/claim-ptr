@@ -1,3 +1,19 @@
+/**
+ * CONFIG SERVICE
+ * 
+ * Service untuk mengelola konfigurasi aplikasi yang disimpan di config.json
+ * 
+ * CATATAN PENTING:
+ * - File ini HANYA untuk konfigurasi server templates (CPU, RAM, disk, egg ID, dll)
+ * - API keys, URLs, dan credentials sensitif HARUS di file .env
+ * - Jangan simpan informasi sensitif di config.json
+ * 
+ * Struktur config.json:
+ * - server: session secret dan konfigurasi server umum
+ * - whatsapp: group ID dan pengaturan bot
+ * - server_templates: template untuk pembuatan server (nodejs, python, dll)
+ */
+
 const fs = require('fs-extra');
 const path = require('path');
 
@@ -74,18 +90,13 @@ async function getConfig() {
       const defaultConfig = {
         server: {
           port: 3000,
-          admin_session_secret: 'default-secret-change-this'
-        },
-        pterodactyl: {
-          panel_url: '',
-          application_api_key: '',
-          location_id: 1,
-          node_id: 1
+          base_url: process.env.BASE_URL || 'http://localhost:3000',
+          admin_session_secret: process.env.ADMIN_SESSION_SECRET || 'default_secret_key'
         },
         whatsapp: {
           admin_number: '',
-          group_id: '',
-          auto_start: false
+          group_id: process.env.WHATSAPP_GROUP_ID || '',
+          auto_start: true
         },
         bot_url: 'http://localhost:3001',
         email: {
@@ -98,18 +109,48 @@ async function getConfig() {
           nodejs: {
             name: 'Node.js Server',
             description: 'Template untuk aplikasi Node.js',
-            memory: 512,
-            disk: 1024,
-            cpu: 100,
-            egg: 15
+            egg: 15,
+            docker_image: 'ghcr.io/pterodactyl/yolks:nodejs_18',
+            startup: 'npm start',
+            limits: {
+              memory: 1024,
+              swap: 0,
+              disk: 2048,
+              io: 500,
+              cpu: 100
+            },
+            feature_limits: {
+              databases: 1,
+              allocations: 1,
+              backups: 1
+            },
+            environment: {
+              STARTUP_CMD: 'npm start',
+              NODE_VERSION: '18'
+            }
           },
           python: {
             name: 'Python Server',
             description: 'Template untuk aplikasi Python',
-            memory: 512,
-            disk: 1024,
-            cpu: 100,
-            egg: 14
+            egg: 16,
+            docker_image: 'ghcr.io/pterodactyl/yolks:python_3.9',
+            startup: 'python3 app.py',
+            limits: {
+              memory: 1024,
+              swap: 0,
+              disk: 2048,
+              io: 500,
+              cpu: 100
+            },
+            feature_limits: {
+              databases: 1,
+              allocations: 1,
+              backups: 1
+            },
+            environment: {
+              STARTUP_FILE: 'app.py',
+              PYTHON_VERSION: '3.9'
+            }
           }
         }
       };
@@ -120,6 +161,18 @@ async function getConfig() {
     }
     
     const config = await fs.readJson(CONFIG_FILE_PATH);
+
+    // Overlay environment variables (do not persist)
+    config.server = config.server || {};
+    if (process.env.ADMIN_SESSION_SECRET) config.server.admin_session_secret = process.env.ADMIN_SESSION_SECRET;
+    if (process.env.BASE_URL) config.server.base_url = process.env.BASE_URL;
+
+    config.whatsapp = config.whatsapp || {};
+    if (process.env.WHATSAPP_GROUP_ID) config.whatsapp.group_id = process.env.WHATSAPP_GROUP_ID;
+    if (process.env.ADMIN_NUMBERS) {
+      config.whatsapp.admin_numbers = process.env.ADMIN_NUMBERS.split(',').map(n=>n.trim());
+    }
+
     configLog('SUCCESS', 'Configuration loaded successfully', {
       sections: Object.keys(config),
       fileSize: JSON.stringify(config).length
@@ -136,36 +189,13 @@ async function getConfig() {
 
 /**
  * Mendapatkan bagian spesifik dari konfigurasi
- * @param {string} section - Nama bagian (server, pterodactyl, whatsapp, server_templates)
+ * @param {string} section - Nama bagian (server, whatsapp, server_templates)
  */
-async function getConfigSection(section) {
-  configLog('INFO', `Reading config section: ${section}`);
-  try {
-    const config = await getConfig();
-    
-    if (!config[section]) {
-      configLog('ERROR', `Config section not found: ${section}`, {
-        availableSections: Object.keys(config)
-      });
-      throw new Error(`Bagian konfigurasi '${section}' tidak ditemukan`);
-    }
-    
-    configLog('SUCCESS', `Config section loaded: ${section}`, {
-      sectionKeys: Object.keys(config[section])
-    });
-    return config[section];
-  } catch (error) {
-    configLog('ERROR', `Failed to read config section: ${section}`, {
-      error: error.message,
-      stack: error.stack
-    });
-    throw error;
-  }
-}
+// removed strict version to avoid duplicate; tolerant version is defined below
 
 /**
  * Mendapatkan bagian spesifik dari konfigurasi
- * @param {string} section - Nama bagian (server, pterodactyl, whatsapp)
+ * @param {string} section - Nama bagian (server, whatsapp, server_templates)
  */
 async function getConfigSection(section) {
   configLog('INFO', `Reading config section: ${section}`);
@@ -220,7 +250,7 @@ async function updateConfigFromForm(formData) {
 
 /**
  * Memperbarui bagian spesifik dari konfigurasi
- * @param {string} section - Nama bagian (server, pterodactyl, whatsapp, server_templates)
+ * @param {string} section - Nama bagian (server, whatsapp, server_templates)
  * @param {object} data - Data konfigurasi baru
  */
 async function updateConfigSection(section, data) {

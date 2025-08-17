@@ -1,3 +1,37 @@
 
+# Dependencies
 /node_modules
+
+# Environment
+.env
+
+# WhatsApp auth session
 /whatsapp/auth
+
+# Data files
+/data/*.json
+/lexzy
+# Logs
+*.log
+logs/
+
+# Test results
+/test-results
+
+# Archive files
+*.rar
+*.zip
+*.tar.gz
+
+# IDE files
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+/tmp
+*.tmp

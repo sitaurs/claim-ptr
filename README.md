@@ -1,322 +1,449 @@
-# MOOTERACT HUB - Website Klaim Server
+# 🚀 Claim Ptero - WhatsApp Server Auto Claim
 
-Website untuk klaim server Node.js, Python, atau N8n yang terintegrasi dengan grup WhatsApp, termasuk fitur verifikasi OTP, pembuatan akun Pterodactyl, dan pengiriman informasi server melalui WhatsApp.
+Sistem otomatis untuk klaim server Pterodactyl dengan verifikasi WhatsApp. User dapat mengklaim server gratis melalui website dengan verifikasi OTP via WhatsApp bot.
 
-## 🚀 Fitur Utama
+## 📋 Fitur Utama
 
-### Untuk Pengguna
-- ✅ **Verifikasi WhatsApp OTP**: Sistem verifikasi nomor WhatsApp dengan kode OTP
-- 🔐 **Pembuatan Akun Otomatis**: Pembuatan akun Pterodactyl otomatis setelah verifikasi
-- 🖥️ **Server Gratis**: Pembuatan server Node.js dan Python otomatis
-- 📋 **Request N8N**: Permintaan server N8n dengan sistem persetujuan admin
-- 📱 **Notifikasi WhatsApp**: Detail akun dikirim melalui WhatsApp setelah server dibuat
-- 👋 **Auto Greeting**: Pesan selamat datang otomatis untuk anggota baru grup WhatsApp
+- ✅ **Auto Claim Server**: Klaim server Pterodactyl otomatis
+- 📱 **WhatsApp Integration**: Verifikasi OTP via WhatsApp bot
+- 🔐 **Admin Panel**: Dashboard admin untuk manage user & server
+- 🎨 **Modern UI**: Interface yang user-friendly dengan Tailwind CSS
+- 📊 **Analytics**: Tracking request dan statistics
+- 🔄 **Real-time Updates**: Notifikasi real-time ke group WhatsApp
+- 🧪 **Testing Support**: Dummy numbers untuk testing
 
-### Untuk Admin
-- 📊 **Dashboard Admin**: Monitoring pengguna, server, dan request
-- ⚙️ **Konfigurasi Lengkap**: Pengaturan Pterodactyl, WhatsApp, dan template server
-- 🛠️ **Template Server**: Konfigurasi custom untuk Node.js dan Python (egg, docker image, limits, dll)
-- 📢 **Sistem Promosi**: Promosi otomatis dengan interval yang dapat disesuaikan
-- 🔔 **Notifikasi Real-time**: Notifikasi WhatsApp untuk setiap request N8N baru
-- 🤖 **Admin Commands**: Command bot WhatsApp untuk manajemen sistem
-- 👥 **Manajemen User**: Kelola pengguna dan lihat server mereka
-- 📋 **Request Management**: Approve/reject request N8N langsung dari WhatsApp
+## 🛠️ Tech Stack
 
-## 🛠️ Teknologi yang Digunakan
-
-- **Frontend**: HTML, CSS, JavaScript, Tailwind CSS
 - **Backend**: Node.js, Express.js
-- **Template Engine**: EJS
-- **Penyimpanan Data**: JSON (tanpa database)
-- **WhatsApp API**: Baileys
-- **Panel Server**: Pterodactyl
-- **Authentication**: bcrypt untuk password hashing
+- **Frontend**: EJS, Tailwind CSS
+- **Database**: JSON file-based storage
+- **WhatsApp**: Baileys WebSocket
+- **API Integration**: Pterodactyl Panel API
+- **Testing**: Jest, Playwright
 
-## 📁 Struktur Proyek
+## 📦 Instalasi & Setup
 
-```
-├── data/                  # Penyimpanan data JSON
-│   ├── admin.json         # Data admin
-│   ├── config.json        # Konfigurasi sistem
-│   ├── n8n_requests.json  # Permintaan server N8n
-│   ├── otps.json          # Data OTP
-│   ├── promotions.json    # Data promosi
-│   ├── servers.json       # Data server
-│   └── users.json         # Data pengguna
-├── middleware/            # Middleware Express
-│   └── auth.js            # Autentikasi admin
-├── public/                # File statis (CSS, JS, gambar)
-│   ├── css/
-│   ├── img/
-│   └── js/
-├── routes/                # Rute aplikasi
-│   ├── api.js             # API endpoints
-│   ├── web.js             # Rute halaman web
-│   └── admin/             # Rute admin
-│       ├── config.js      # Konfigurasi admin
-│       └── requests.js    # Manajemen request
-├── services/              # Layanan aplikasi
-│   ├── admin.js           # Layanan admin
-│   ├── config.js          # Manajemen konfigurasi
-│   ├── otp.js             # Layanan OTP
-│   ├── promotion.js       # Layanan promosi
-│   ├── pterodactyl.js     # Integrasi Pterodactyl
-│   ├── request.js         # Manajemen request
-│   ├── user.js            # Manajemen pengguna
-│   ├── whatsapp.js        # Layanan WhatsApp
-│   └── whatsapp-admin.js  # Admin commands WhatsApp
-├── views/                 # Template EJS
-│   ├── admin/             # Halaman admin
-│   │   ├── config.ejs
-│   │   ├── dashboard.ejs
-│   │   ├── layout.ejs
-│   │   ├── login.ejs
-│   │   ├── n8n-requests.ejs
-│   │   ├── promotions.ejs
-│   │   ├── requests.ejs
-│   │   ├── server-templates.ejs
-│   │   └── users.ejs
-│   ├── claim.ejs
-│   ├── create-account.ejs
-│   ├── create-server.ejs
-│   ├── index.ejs
-│   ├── success.ejs
-│   └── verify.ejs
-├── whatsapp/              # Bot WhatsApp
-│   ├── bot.js             # Bot utama
-│   ├── start-bot.js       # Server bot
-│   └── auth/              # File autentikasi WhatsApp
-├── index.js               # Server utama
-├── start-bot.js           # Starter bot (legacy)
-└── package.json
-```
+### Prasyarat
+- Node.js 18.x atau lebih baru
+- VPS dengan Ubuntu 20.04/22.04
+- Domain yang sudah A record ke IP VPS
+- Panel Pterodactyl yang sudah running
 
-## 🔧 Instalasi dan Konfigurasi
+### 🔧 Local Development
 
-### 1. Clone Repository
+1. **Clone Repository**
+   ```bash
+   git clone <repository-url>
+   cd claim-ptero
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Setup Environment**
+   ```bash
+   cp env.example .env
+   # Edit .env sesuai konfigurasi Anda
+   ```
+
+4. **Jalankan Development**
+   ```bash
+   # Terminal 1: Backend
+   npm run dev
+   
+   # Terminal 2: WhatsApp Bot
+   npm run dev-bot
+   ```
+
+5. **Akses Aplikasi**
+   - Website: http://localhost:3000
+   - Admin Panel: http://localhost:3000/admin
+   - Login: admin / admin123
+
+### 🌐 Production Deployment (VPS + Nginx + SSL)
+
+#### 1. Persiapan VPS
 
 ```bash
-git clone <repository-url>
+# Update sistem
+sudo apt update && sudo apt upgrade -y
+
+# Install Node.js 18.x
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install PM2 untuk process manager
+sudo npm install -g pm2
+
+# Install Nginx
+sudo apt install nginx -y
+
+# Install Certbot untuk SSL
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+#### 2. Setup Project
+
+```bash
+# Clone project
+cd /var/www
+sudo git clone <repository-url> claim-ptero
+sudo chown -R $USER:$USER /var/www/claim-ptero
 cd claim-ptero
+
+# Install dependencies
+npm install --production
+
+# Setup environment
+cp env.example .env
+nano .env
 ```
 
-### 2. Install Dependencies
+#### 3. Konfigurasi Environment (.env)
 
 ```bash
-npm install
-```
-
-### 3. Konfigurasi Environment
-
-1. Salin file `.env.example` menjadi `.env`:
-
-```bash
-cp .env.example .env
-```
-
-2. Edit file `.env`:
-
-```env
 # Server Configuration
 PORT=3000
+BASE_URL=https://yourdomain.com
 
 # Pterodactyl Panel Configuration
-PANEL_URL=https://panel.example.com
+PANEL_URL=https://panel.yourdomain.com
 API_KEY=your_pterodactyl_api_key
 
 # Admin Configuration
-ADMIN_SESSION_SECRET=your_session_secret
+ADMIN_SESSION_SECRET=your-super-secret-key
 
-# WhatsApp Configuration
-WHATSAPP_GROUP_ID=your_whatsapp_group_id
+# WhatsApp Bot Configuration
+WHATSAPP_GROUP_ID=your_group_id
+ADMIN_NUMBERS=6281234567890,6289876543210
+
+# Bot API (untuk production pisahkan port)
+BOT_PORT=3001
+
+# Dummy test numbers (optional)
+DUMMY_TEST_NUMBERS=6280000000001,6280000000002
 ```
 
-### 4. Konfigurasi Data
+#### 4. Setup PM2
 
-File `data/config.json` akan dibuat otomatis dengan konfigurasi default. Anda dapat mengubahnya melalui dashboard admin atau mengedit manual:
+```bash
+# Buat ecosystem file
+cat > ecosystem.config.js << 'EOF'
+module.exports = {
+  apps: [
+    {
+      name: 'claim-ptero-backend',
+      script: 'index.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000
+      }
+    },
+    {
+      name: 'claim-ptero-bot',
+      script: 'whatsapp/start-bot.js',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '512M',
+      args: '--force-start',
+      env: {
+        NODE_ENV: 'production',
+        BOT_PORT: 3001
+      }
+    }
+  ]
+};
+EOF
 
-```json
-{
-  "server": {
-    "port": 3000,
-    "admin_session_secret": "your_secret_key"
-  },
-  "pterodactyl": {
-    "panel_url": "https://panel.example.com",
-    "api_key": "your_api_key"
-  },
-  "whatsapp": {
-    "group_id": "group_id@g.us",
-    "auto_start": true,
-    "admin_commands": [...]
-  },
-  "server_templates": {
-    "nodejs": { ... },
-    "python": { ... }
-  }
+# Start aplikasi dengan PM2
+pm2 start ecosystem.config.js
+
+# Setup auto-start saat boot
+pm2 startup
+pm2 save
+```
+
+#### 5. Konfigurasi Nginx
+
+```bash
+# Buat file konfigurasi Nginx
+sudo nano /etc/nginx/sites-available/claim-ptero
+```
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com www.yourdomain.com;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer-when-downgrade" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+    # Static files
+    location /css/ {
+        alias /var/www/claim-ptero/public/css/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /js/ {
+        alias /var/www/claim-ptero/public/js/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /img/ {
+        alias /var/www/claim-ptero/public/img/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Main application
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+
+    # WhatsApp Bot API (optional, jika ingin expose)
+    location /bot-api/ {
+        proxy_pass http://127.0.0.1:3001/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        
+        # Restrict access (optional)
+        # allow 127.0.0.1;
+        # deny all;
+    }
+
+    # Rate limiting
+    location /api/ {
+        limit_req zone=api burst=10 nodelay;
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 }
 ```
 
-## 🚀 Menjalankan Aplikasi
+```bash
+# Tambahkan rate limiting di nginx.conf
+sudo nano /etc/nginx/nginx.conf
+```
 
-### Mode Development (Recommended)
-
-Jalankan backend dan bot WhatsApp secara terpisah:
+Tambahkan di dalam `http` block:
+```nginx
+# Rate limiting
+limit_req_zone $binary_remote_addr zone=api:10m rate=1r/s;
+limit_req_zone $binary_remote_addr zone=general:10m rate=5r/s;
+```
 
 ```bash
-# Terminal 1 - Backend
-npm run start
-
-# Terminal 2 - Bot WhatsApp  
-npm run start-bot
+# Enable site dan test konfigurasi
+sudo ln -s /etc/nginx/sites-available/claim-ptero /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-### Mode Production
+#### 6. Setup SSL dengan Certbot
 
 ```bash
-# Jalankan semua sekaligus
-npm run start-all
+# Generate SSL certificate
+sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
-# Atau jalankan terpisah
-npm start              # Backend saja
-npm run start-bot      # Bot WhatsApp saja
+# Setup auto-renewal
+sudo systemctl enable certbot.timer
+sudo systemctl start certbot.timer
+
+# Test renewal
+sudo certbot renew --dry-run
 ```
 
-### Akses Aplikasi
+#### 7. Setup Firewall
 
-- **Website**: `http://localhost:3000`
-- **Admin Panel**: `http://localhost:3000/admin`
-- **Login Admin Default**:
-  - Username: `admin`
-  - Password: `admin123`
-
-## 📱 Setup WhatsApp Bot
-
-1. Saat pertama menjalankan bot, scan QR code yang muncul di terminal
-2. Bot akan terhubung dan siap menerima command
-3. Bot akan otomatis mengirim greeting ke member baru grup
-
-## 🎯 Cara Penggunaan
-
-### Alur Klaim Server (User)
-
-1. **Akses Website** → Buka `http://localhost:3000`
-2. **Klik "Klaim Server"** → Masukkan nomor WhatsApp
-3. **Verifikasi OTP** → Masukkan kode yang dikirim via WhatsApp
-4. **Buat Akun** → Isi data akun (email, nama, password)
-5. **Pilih Server** → Pilih Node.js atau Python (otomatis dibuat)
-6. **Terima Detail** → Detail akun dikirim via WhatsApp
-
-### Alur Request N8N
-
-1. **Pilih N8N** → Saat pemilihan server, pilih N8N
-2. **Isi Alasan** → Jelaskan kebutuhan N8N Anda
-3. **Kirim Request** → Request dikirim ke admin
-4. **Notifikasi Admin** → Admin menerima notifikasi via WhatsApp
-5. **Approval** → Admin approve/reject via dashboard atau WhatsApp command
-
-### Admin Commands (WhatsApp)
-
-```
-!help          - Tampilkan daftar perintah
-!status        - Cek status sistem
-!stats         - Statistik detail sistem
-!requests      - Lihat pending requests
-!approve <id>  - Approve N8N request
-!reject <id>   - Reject N8N request
-!broadcast <msg> - Kirim broadcast ke grup
-!restart       - Restart bot WhatsApp
+```bash
+# Configure UFW
+sudo ufw allow ssh
+sudo ufw allow 'Nginx Full'
+sudo ufw --force enable
 ```
 
-## ⚙️ Konfigurasi Admin Dashboard
+#### 8. WhatsApp Bot Setup
 
-### 1. Template Server
+1. **Akses server dan scan QR code**:
+   ```bash
+   pm2 logs claim-ptero-bot
+   ```
 
-- **Akses**: Admin Panel → Template Server
-- **Fitur**: 
-  - Konfigurasi egg ID, docker image, startup command
-  - Set resource limits (memory, disk, CPU, IO)
-  - Environment variables custom
-  - Test template functionality
+2. **Scan QR code** yang muncul dengan WhatsApp Anda
 
-### 2. Konfigurasi Sistem
+3. **Verifikasi bot berjalan**:
+   ```bash
+   pm2 status
+   curl https://yourdomain.com/api/status
+   ```
 
-- **Server**: Port, auto-start WhatsApp
-- **Pterodactyl**: Panel URL, API key
-- **WhatsApp**: Group ID, admin commands
-- **Templates**: Node.js dan Python settings
+## 🔧 Konfigurasi
 
-### 3. Manajemen User & Server
+### Environment Variables (.env)
 
-- **Users**: Lihat semua pengguna terdaftar
-- **Servers**: Monitor server per user
-- **Requests**: Kelola request N8N
-- **Promotions**: Atur promosi otomatis
+```bash
+# Server
+PORT=3000
+BASE_URL=https://yourdomain.com
 
-## 🔐 Keamanan
+# Pterodactyl Panel
+PANEL_URL=https://panel.yourdomain.com
+API_KEY=ptla_xxxxxxxxxxxxxxxxxxxxxxxx
 
-1. **Ubah Password Admin**: Segera ubah password default setelah instalasi
-2. **API Key Security**: Jangan bagikan API key Pterodactyl
-3. **HTTPS**: Gunakan HTTPS untuk production
-4. **Firewall**: Batasi akses ke endpoint admin
-5. **Session Secret**: Gunakan session secret yang kuat
+# Security
+ADMIN_SESSION_SECRET=super-secret-key-change-this
+
+# WhatsApp
+WHATSAPP_GROUP_ID=120363000000000000
+ADMIN_NUMBERS=6281234567890,6289876543210
+BOT_PORT=3001
+
+# Testing (optional)
+DUMMY_TEST_NUMBERS=6280000000001
+```
+
+### Server Templates (data/config.json)
+
+Project sudah include template default untuk:
+- **Node.js**: Egg 16, Memory 512MB, Disk 1GB
+- **Python**: Egg 17, Memory 1GB, Disk 2GB
+
+## 📱 Cara Penggunaan
+
+### User Flow
+1. Kunjungi website: `https://yourdomain.com`
+2. Isi form klaim server (nama, email, whatsapp, tipe server)
+3. Verifikasi OTP yang dikirim via WhatsApp bot
+4. Server otomatis dibuat di panel Pterodactyl
+5. Detail login dikirim via WhatsApp
+
+### Admin Panel
+1. Akses: `https://yourdomain.com/admin`
+2. Login: admin / admin123 (ganti setelah login pertama)
+3. Kelola users, servers, requests, dan konfigurasi
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+npm test
+
+# E2E tests
+npm run test:e2e
+
+# Test dengan UI
+npm run test:e2e:ui
+```
+
+## 🔧 Maintenance
+
+### Monitoring dengan PM2
+```bash
+# Status aplikasi
+pm2 status
+
+# Logs
+pm2 logs claim-ptero-backend
+pm2 logs claim-ptero-bot
+
+# Restart aplikasi
+pm2 restart all
+
+# Update aplikasi
+cd /var/www/claim-ptero
+git pull
+npm install --production
+pm2 restart all
+```
+
+### Backup Data
+```bash
+# Backup data penting
+sudo tar -czf /backup/claim-ptero-$(date +%Y%m%d).tar.gz \
+    /var/www/claim-ptero/data/ \
+    /var/www/claim-ptero/.env \
+    /var/www/claim-ptero/whatsapp/auth/
+```
+
+### SSL Certificate Renewal
+```bash
+# Manual renewal
+sudo certbot renew
+
+# Check auto-renewal
+sudo systemctl status certbot.timer
+```
 
 ## 🐛 Troubleshooting
 
-### Bot WhatsApp Tidak Terhubung
+Lihat panduan lengkap di [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)
 
-1. Pastikan folder `whatsapp/auth` ada dan dapat ditulis
-2. Hapus folder `whatsapp/auth` untuk reset sesi
-3. Pastikan WhatsApp di ponsel sudah versi terbaru
-4. Cek koneksi internet
+### Common Issues
 
-### Error Login Admin
+1. **Server restart berulang**: Gunakan `nodemon.json` yang sudah disediakan
+2. **Admin numbers tidak terbaca**: Pastikan `ADMIN_NUMBERS` di `.env`
+3. **WhatsApp bot disconnect**: Restart bot dan scan ulang QR
+4. **SSL error**: Pastikan domain sudah A record dan port 80/443 terbuka
 
-1. Pastikan password `admin123` untuk username `admin`
-2. Cek file `data/admin.json` 
-3. Reset password via service jika perlu
+## 📚 Documentation
 
-### Error Membuat Server
+- [`PANDUAN_LOCAL.md`](PANDUAN_LOCAL.md) - Setup development lokal
+- [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) - Panduan troubleshooting
+- [`env.example`](env.example) - Template environment variables
 
-1. Periksa API key Pterodactyl valid
-2. Pastikan egg ID tersedia di panel
-3. Cek resource availability di node
-4. Periksa log aplikasi untuk detail error
+## 🤝 Contributing
 
-### Error WhatsApp Commands
+1. Fork repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
 
-1. Pastikan bot terhubung ke grup
-2. Cek group ID di konfigurasi
-3. Verifikasi admin commands format
+## 📄 License
 
-## 📝 Pengembangan
+MIT License - lihat file LICENSE untuk detail lengkap.
 
-### Menambah Server Type Baru
+## 🆘 Support
 
-1. Tambahkan template di `data/config.json`
-2. Update service `pterodactyl.js`
-3. Tambahkan UI di admin dashboard
-4. Update validation di API
-
-### Custom Admin Commands
-
-1. Edit `services/whatsapp-admin.js`
-2. Tambahkan command di `data/config.json`
-3. Update handler di `whatsapp/bot.js`
-
-## 📄 Lisensi
-
-MIT License - Lihat file LICENSE untuk detail lengkap.
-
-## 👥 Kontributor
-
-- **Developer**: MOOTERACT Team
-- **Support**: admin@mooteract.com
+Jika mengalami masalah:
+1. Cek [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)
+2. Lihat logs PM2: `pm2 logs`
+3. Test dengan environment minimal
+4. Buat issue di repository ini
 
 ---
 
-**⚠️ Catatan Penting**: 
-- Selalu backup data sebelum update
-- Test di environment development dulu
-- Monitor resource usage secara berkala
-- Jangan lupa update password default!
+**Dibuat dengan ❤️ untuk komunitas hosting gratis**

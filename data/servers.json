@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "name": "my-node-server",
+    "type": "nodejs",
+    "version": "18",
+    "userId": 101,
+    "pterodactylId": 202,
+    "identifier": "srv202",
+    "createdAt": "2025-08-17T02:06:05.518Z"
+  },
+  {
+    "name": "test1",
+    "type": "nodejs",
+    "version": "23",
+    "userId": 23,
+    "pterodactylId": 14,
+    "identifier": "f4869cf1",
+    "createdAt": "2025-08-17T07:54:46.834Z"
+  },
+  {
+    "name": "test2",
+    "type": "python",
+    "version": "3.13",
+    "userId": 24,
+    "pterodactylId": 15,
+    "identifier": "d0506c22",
+    "createdAt": "2025-08-17T07:58:18.341Z"
+  }
+]

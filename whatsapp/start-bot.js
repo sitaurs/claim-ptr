@@ -25,6 +25,17 @@ function botServiceLog(level, message, data = null) {
   }
 }
 
+// Function untuk mendapatkan Group ID dari env
+function getGroupId() {
+  const id = process.env.WHATSAPP_GROUP_ID || '';
+  return id.endsWith('@g.us') ? id : (id ? id + '@g.us' : '');
+}
+
+// Function untuk mendapatkan Admin Key dari env
+function getAdminKey() {
+  return process.env.ADMIN_SESSION_SECRET || 'default-secret';
+}
+
 // Cek auth directory
 const authDir = path.join(__dirname, 'auth');
 botServiceLog('INFO', 'Checking auth directory...');
@@ -56,7 +67,6 @@ try {
   if (!config.whatsapp) {
     botServiceLog('INFO', 'Creating default whatsapp config...');
     config.whatsapp = {
-      group_id: "120363400276669417@g.us",
       auto_start: true,
       admin_commands: [
         { command: "!help", description: "Tampilkan daftar perintah admin" },
@@ -77,8 +87,7 @@ try {
   if (!config.server) {
     botServiceLog('INFO', 'Creating default server config...');
     config.server = {
-      port: 3000,
-      admin_session_secret: "zamani-zamani-fahri-zamani"
+      port: 3000
     };
     fs.writeJsonSync(configPath, config, { spaces: 2 });
     botServiceLog('SUCCESS', 'Default server config created');
@@ -112,7 +121,7 @@ app.post('/api/bot/send-message', async (req, res) => {
   try {
     const { to, message, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized send-message request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
@@ -136,7 +145,7 @@ app.post('/api/bot/send-otp', async (req, res) => {
   try {
     const { to, otp, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized send-otp request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
@@ -160,7 +169,7 @@ app.post('/api/bot/send-account-details', async (req, res) => {
   try {
     const { to, email, password, serverName, serverType, panelUrl, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized send-account-details request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
@@ -188,13 +197,13 @@ app.post('/api/bot/send-promotion', async (req, res) => {
   try {
     const { message, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized promotion request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
     
-    botServiceLog('INFO', `Sending promotion to group: ${config.whatsapp.group_id}`);
-    const success = await sendPromotion(config.whatsapp.group_id, message);
+    botServiceLog('INFO', `Sending promotion to group: ${getGroupId()}`);
+    const success = await sendPromotion(getGroupId(), message);
     botServiceLog(success ? 'SUCCESS' : 'ERROR', `Promotion send result: ${success}`);
     res.json({ success });
   } catch (error) {
@@ -213,7 +222,7 @@ app.post('/api/bot/admin-command', async (req, res) => {
   try {
     const { command, params, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized admin-command request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
@@ -263,7 +272,7 @@ app.post('/api/bot/send', async (req, res) => {
   try {
     const { to, message, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized send request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
@@ -294,7 +303,7 @@ app.post('/api/bot/command', async (req, res) => {
   try {
     const { command, params, adminKey } = req.body;
     
-    if (adminKey !== config.server.admin_session_secret) {
+    if (adminKey !== getAdminKey()) {
       botServiceLog('WARNING', 'Unauthorized command request - invalid admin key');
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
@@ -308,7 +317,7 @@ app.post('/api/bot/command', async (req, res) => {
         break;
       case '!broadcast':
         if (params && params.message) {
-          const success = await sendPromotion(config.whatsapp.group_id, params.message);
+          const success = await sendPromotion(getGroupId(), params.message);
           response = { success, message: success ? 'Broadcast sent' : 'Failed to send broadcast' };
         } else {
           response = { success: false, message: 'Message parameter is required' };
@@ -377,14 +386,102 @@ app.get('/api/bot/status', (req, res) => {
   }
 });
 
+// Endpoint untuk reload promotions
+app.post('/api/bot/reload-promotions', async (req, res) => {
+  botServiceLog('INFO', 'Reload promotions requested');
+  try {
+    const { loadAndSchedulePromotions } = require('./bot');
+    loadAndSchedulePromotions();
+    res.json({ success: true, message: 'Promotions reloaded' });
+  } catch (error) {
+    botServiceLog('ERROR', 'Error reloading promotions', { error: error.message });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Endpoint untuk start bot secara manual
+app.post('/api/bot/start', async (req, res) => {
+  botServiceLog('INFO', 'Manual bot start requested');
+  try {
+    // Cek apakah bot sudah connect
+    const { getConnectionState } = require('./bot');
+    const currentState = getConnectionState();
+    
+    if (currentState === 'open') {
+      botServiceLog('INFO', 'Bot already connected');
+      return res.json({ 
+        success: true, 
+        message: 'Bot already connected',
+        state: currentState
+      });
+    }
+    
+    botServiceLog('INFO', 'Starting WhatsApp bot...');
+    await initWhatsApp();
+    
+    res.json({ 
+      success: true, 
+      message: 'WhatsApp bot initialization started. Check logs for QR code.' 
+    });
+  } catch (error) {
+    botServiceLog('ERROR', 'Error starting bot manually', {
+      error: error.message,
+      stack: error.stack
+    });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+});
+
+// Endpoint untuk stop bot
+app.post('/api/bot/stop', async (req, res) => {
+  botServiceLog('INFO', 'Manual bot stop requested');
+  try {
+    if (global.whatsappSocket) {
+      await global.whatsappSocket.logout();
+      global.whatsappSocket = null;
+      botServiceLog('SUCCESS', 'Bot disconnected successfully');
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'WhatsApp bot stopped' 
+    });
+  } catch (error) {
+    botServiceLog('ERROR', 'Error stopping bot', {
+      error: error.message,
+      stack: error.stack
+    });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+});
+
 // Start Express server untuk API bot
 app.listen(PORT, () => {
   botServiceLog('SUCCESS', `🌐 WhatsApp Bot API running at http://localhost:${PORT}`);
 });
 
-// Inisialisasi WhatsApp bot jika auto_start diaktifkan
-if (config.whatsapp && config.whatsapp.auto_start) {
-  botServiceLog('INFO', 'Auto-start enabled, initializing WhatsApp Bot...');
+// Inisialisasi WhatsApp bot
+// Ketika dijalankan dengan npm run dev-bot, bot harus langsung start
+// Tidak peduli dengan setting auto_start di config
+botServiceLog('DEBUG', 'Auto-start check', {
+  forceStart: process.argv.includes('--force-start'),
+  npmEvent: process.env.npm_lifecycle_event,
+  configAutoStart: config.whatsapp && config.whatsapp.auto_start,
+  argv: process.argv
+});
+
+const shouldAutoStart = process.argv.includes('--force-start') || 
+                       process.env.npm_lifecycle_event === 'dev-bot' ||
+                       (config.whatsapp && config.whatsapp.auto_start);
+
+if (shouldAutoStart) {
+  botServiceLog('INFO', '🚀 Starting WhatsApp Bot (auto-start or dev-bot command)...');
   initWhatsApp().catch(err => {
     botServiceLog('ERROR', 'Failed to initialize WhatsApp Bot', {
       error: err.message,
@@ -393,4 +490,5 @@ if (config.whatsapp && config.whatsapp.auto_start) {
   });
 } else {
   botServiceLog('INFO', 'Auto-start disabled, WhatsApp Bot not started automatically');
+  botServiceLog('INFO', 'Use POST /api/bot/start to start bot manually');
 }

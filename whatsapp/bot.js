@@ -3,6 +3,7 @@ const qrcode = require('qrcode-terminal');
 const fs = require('fs-extra');
 const path = require('path');
 const { executeAdminCommand } = require('../services/whatsapp-admin');
+const { getGroupConfig } = require('../services/welcome-config');
 
 console.log('🤖 WhatsApp Bot Module Loading...');
 
@@ -41,8 +42,23 @@ let sock = null;
 let currentConnectionState = 'closed';
 let currentQRCode = null;
 
+// Helper format JID user & group
+function formatUserJid(number) {
+  if (!number) return null;
+  if (number.endsWith('@s.whatsapp.net')) return number;
+  let n = String(number).replace(/\D/g, '');
+  if (n.startsWith('0')) n = '62' + n.slice(1);
+  if (!n.startsWith('62')) n = '62' + n;
+  return n + '@s.whatsapp.net';
+}
+
+function formatGroupId(groupId) {
+  if (!groupId) return null;
+  return groupId.endsWith('@g.us') ? groupId : groupId + '@g.us';
+}
+
 // Fungsi untuk mengirim pesan
-async function sendMessage(to, message) {
+async function sendMessage(to, message, mentions = null) {
   botLog('INFO', `Attempting to send message to: ${to}`);
   
   // Get socket from global variable if local sock is null
@@ -55,8 +71,8 @@ async function sendMessage(to, message) {
 
   try {
     botLog('DEBUG', `Original recipient: ${to}`);
-    // Format nomor telepon
-    if (!to.endsWith('@s.whatsapp.net')) {
+    // Format hanya jika bukan JID lengkap (user) dan bukan group
+    if (!to.endsWith('@s.whatsapp.net') && !to.endsWith('@g.us')) {
       to = to.replace(/^\+/, '');
       to = to.replace(/^0/, '62');
       to = to.replace(/[- ]/g, '');
@@ -64,7 +80,8 @@ async function sendMessage(to, message) {
     }
     botLog('DEBUG', `Formatted recipient: ${to}`);
 
-    await activeSocket.sendMessage(to, { text: message });
+    const payload = mentions && Array.isArray(mentions) && mentions.length > 0 ? { text: message, mentions } : { text: message };
+    await activeSocket.sendMessage(to, payload);
     botLog('SUCCESS', `Message sent successfully to: ${to}`);
     return true;
   } catch (error) {
@@ -101,12 +118,34 @@ async function sendAccountDetails(to, email, password, serverName, serverType, p
 }
 
 // Fungsi untuk mengirim pesan selamat datang
-async function sendWelcomeMessage(to) {
-  botLog('INFO', `Sending welcome message to: ${to}`);
-  const message = `*Selamat Datang di MOOTERACT HUB!*\n\nTerima kasih telah bergabung dengan grup kami. Anda dapat melakukan klaim server Node.js, Python, atau N8n secara gratis di link berikut:\n\nhttp://localhost:3000/claim\n\nSilahkan kunjungi link tersebut untuk melakukan klaim server Anda.`;
-  const result = await sendMessage(to, message);
-  botLog(result ? 'SUCCESS' : 'ERROR', `Welcome message send result: ${result}`);
-  return result;
+async function sendWelcomeMessage(newUserJid, groupId) {
+  try {
+    const { getConfig } = require('../services/config');
+    const cfg = await getConfig();
+    const baseUrl = (cfg.server && cfg.server.base_url) ? cfg.server.base_url.replace(/\/+$/, '') : 'http://localhost:3000';
+    const claimUrl = `${baseUrl}/claim`;
+
+    // Pastikan groupId & userJid terformat benar
+    const formattedGroupId = formatGroupId(groupId);
+    const formattedUserJid = formatUserJid(newUserJid);
+
+    // Pesan ke grup (mention)
+    const mentionText = `👋 Selamat datang @${formattedUserJid.split('@')[0]} di MOOTERACT HUB!\n\nSilakan klaim server gratis Anda di ${claimUrl}`;
+    if (sock) {
+      await sock.sendMessage(formattedGroupId, { text: mentionText, mentions: [formattedUserJid] });
+    } else {
+      await sendMessage(formattedGroupId, mentionText);
+    }
+
+    // Pesan pribadi
+    const privateMessage = `*Selamat Datang di MOOTERACT HUB!*\n\nAnda telah bergabung dengan grup kami. Klaim server Node.js, Python, atau N8n gratis di ${claimUrl}`;
+    await sendMessage(formattedUserJid, privateMessage);
+    botLog('SUCCESS', 'Welcome messages sent');
+    return true;
+  } catch (err) {
+    botLog('ERROR', 'Failed to send welcome messages', { error: err.message });
+    return false;
+  }
 }
 
 // Fungsi untuk mengirim promosi
@@ -114,9 +153,27 @@ async function sendPromotion(groupId, promotionMessage) {
   botLog('INFO', `Sending promotion to group: ${groupId}`, { 
     messageLength: promotionMessage?.length || 0 
   });
-  const result = await sendMessage(groupId, promotionMessage);
-  botLog(result ? 'SUCCESS' : 'ERROR', `Promotion send result: ${result}`);
-  return result;
+  try {
+    // Jika groupId tidak @g.us, coba ambil dari config
+    let target = groupId;
+    if (!String(target).endsWith('@g.us')) {
+      try {
+        const { getConfig } = require('../services/config');
+        const cfg = await getConfig();
+        const cfgGroup = cfg?.whatsapp?.group_id || target;
+        target = formatGroupId(cfgGroup);
+      } catch {}
+    }
+    const ok = await sendMessage(target, promotionMessage);
+    if (!ok) {
+      botLog('ERROR', 'Promotion failed to send (sendMessage returned false)', { target });
+    }
+    botLog(ok ? 'SUCCESS' : 'ERROR', `Promotion send result: ${ok}`);
+    return ok;
+  } catch (e) {
+    botLog('ERROR', 'Promotion send exception', { error: e.message });
+    return false;
+  }
 }
 
 // Inisialisasi WhatsApp bot
@@ -179,24 +236,65 @@ async function initWhatsApp() {
   sock.ev.on('creds.update', saveCreds);
   botLog('SUCCESS', 'Credentials update handler registered');
 
+  // Handle group participant updates (join events)
+  sock.ev.on('group-participants.update', async (upd) => {
+    try {
+      const { id: groupId, participants, action } = upd;
+      const { getConfig } = require('../services/config');
+      const cfg = await getConfig();
+      const targetGroup = (cfg.whatsapp && cfg.whatsapp.group_id) ? cfg.whatsapp.group_id : null;
+      if (!targetGroup) return; // group not configured
+
+      // Normalise to @g.us
+      const formattedTarget = targetGroup.includes('@g.us') ? targetGroup : targetGroup + '@g.us';
+      if (groupId !== formattedTarget) return; // not our group
+
+      const groupCfg = getGroupConfig(groupId);
+
+      if (!groupCfg.on) return; // fitur welcome dimatikan
+
+      const meta = await sock.groupMetadata(groupId).catch(() => null);
+      const groupName = meta?.subject || 'Group';
+
+      if (action === 'add' && participants && participants.length) {
+        // Jika tagAllOnJoin aktif, mention semua member; else hanya yang baru join
+        const mentionTargets = groupCfg.tagAllOnJoin && meta ? meta.participants.map(x=>x.id) : participants;
+
+        // Render template
+        const text = (groupCfg.welcome || 'Selamat datang, @user di *{group}*!')
+          .replace('{group}', groupName)
+          .replace('@user', participants.map(j=> '@'+j.split('@')[0]).join(', '));
+
+        await sendMessage(groupId, text, mentionTargets);
+
+        // DM masing-masing
+        for (const p of participants) {
+          await sendWelcomeMessage(p, groupId); // reuse existing private message
+        }
+      } else if (action === 'remove' && participants && participants.length) {
+        const text = (groupCfg.bye || 'Sampai jumpa, @user dari *{group}*.')
+          .replace('{group}', groupName)
+          .replace('@user', participants.map(j=> '@'+j.split('@')[0]).join(', '));
+        await sendMessage(groupId, text, participants);
+      }
+    } catch (err) {
+      botLog('ERROR', 'Failed handling group participant update', { error: err.message });
+    }
+  });
+
   // Menangani pesan masuk
   sock.ev.on('messages.upsert', async ({ messages }) => {
     botLog('DEBUG', `Received ${messages.length} messages`);
     
     for (const message of messages) {
       try {
-        // Handle new members in group
-        if (message.key.remoteJid.endsWith('@g.us') && message.messageStubType === 27) {
-          const newMember = message.messageStubParameters[0];
-          botLog('INFO', `New member joined group: ${newMember}`);
-          await sendWelcomeMessage(newMember);
-        }
+        // (Moved join handling to dedicated listener)
         
         // Handle text messages for admin commands
         if (message.message?.conversation || message.message?.extendedTextMessage?.text) {
           const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text;
           const from = message.key.remoteJid;
-          const isFromAdmin = message.key.participant || message.key.remoteJid;
+          const senderJid = message.key.participant || message.key.remoteJid;
           
           botLog('MESSAGE', `Received message from ${from}`, {
             messageText: messageText?.substring(0, 100) + (messageText?.length > 100 ? '...' : ''),
@@ -206,10 +304,20 @@ async function initWhatsApp() {
           // Check if message starts with admin command
           if (messageText && messageText.startsWith('!')) {
             const command = messageText.split(' ')[0];
-            botLog('INFO', `Processing admin command: ${command} from ${from}`);
-            
-            // Execute admin command
-            await executeAdminCommand(command, from, messageText, sendMessage);
+            try {
+              const { getConfig } = require('../services/config');
+              const cfg = await getConfig();
+              const adminNums = Array.isArray(cfg?.whatsapp?.admin_numbers) ? cfg.whatsapp.admin_numbers : (cfg?.whatsapp?.admin_number ? [cfg.whatsapp.admin_number] : []);
+              const adminJids = adminNums.filter(Boolean).map(n => formatUserJid(n));
+              if (!adminJids.includes(senderJid)) {
+                botLog('WARNING', `Ignoring admin command from non-admin: ${senderJid}`);
+              } else {
+                botLog('INFO', `Processing admin command: ${command} from ${from}`);
+                await executeAdminCommand(command, from, messageText, sendMessage);
+              }
+            } catch (e) {
+              botLog('ERROR', 'Admin command processing error', { error: e.message });
+            }
           }
         }
       } catch (error) {
@@ -288,5 +396,6 @@ module.exports = {
   sendWelcomeMessage,
   sendPromotion,
   getConnectionState,
-  getQRCode
+  getQRCode,
+  loadAndSchedulePromotions
 };

@@ -3,59 +3,20 @@
     "port": 3000,
     "admin_session_secret": "zamani-zamani-fahri-zamani"
   },
-  "pterodactyl": {
-    "panel_url": "https://panel.flx.web.id",
-    "api_key": "ptla_iyCcDoFJDEvfu1gBy89UBcABs0RoxKsvblygPDbzSMk"
-  },
   "whatsapp": {
-    "group_id": "120363400276669417@g.us",
-    "auto_start": true,
-    "admin_commands": [
-      {
-        "command": "!help",
-        "description": "Tampilkan daftar perintah admin"
-      },
-      {
-        "command": "!status",
-        "description": "Cek status sistem"
-      },
-      {
-        "command": "!stats",
-        "description": "Tampilkan statistik sistem"
-      },
-      {
-        "command": "!broadcast",
-        "description": "Kirim pesan broadcast (format: !broadcast <pesan>)"
-      },
-      {
-        "command": "!restart",
-        "description": "Restart bot WhatsApp"
-      },
-      {
-        "command": "!requests",
-        "description": "Lihat pending requests"
-      },
-      {
-        "command": "!approve",
-        "description": "Approve N8N request (format: !approve <request_id>)"
-      },
-      {
-        "command": "!reject",
-        "description": "Reject N8N request (format: !reject <request_id>)"
-      }
-    ]
+    "group_id": "120363400276669417@g.us"
   },
   "server_templates": {
     "nodejs": {
-      "egg": 15,
-      "docker_image": "ghcr.io/pterodactyl/yolks:nodejs_18",
-      "startup": "npm start",
+      "egg": 16,
+      "docker_image": "ghcr.io/parkervcp/yolks:nodejs_21",
+      "startup": "if [[ -d .git ]] && [[ {{AUTO_UPDATE}} == \"1\" ]]; then git pull; fi; if [[ ! -z ${NODE_PACKAGES} ]]; then /usr/local/bin/npm install ${NODE_PACKAGES}; fi; if [[ ! -z ${UNNODE_PACKAGES} ]]; then /usr/local/bin/npm uninstall ${UNNODE_PACKAGES}; fi; if [ -f /home/container/package.json ]; then /usr/local/bin/npm install; fi; if [[ \"${MAIN_FILE}\" == \"*.js\" ]]; then /usr/local/bin/node \"/home/container/${MAIN_FILE}\" ${NODE_ARGS}; else /usr/local/bin/ts-node --esm \"/home/container/${MAIN_FILE}\" ${NODE_ARGS}; fi",
       "limits": {
-        "memory": 1024,
-        "swap": 0,
-        "disk": 2048,
+        "memory": 512,
+        "disk": 1024,
+        "cpu": 100,
         "io": 500,
-        "cpu": 100
+        "swap": 0
       },
       "feature_limits": {
         "databases": 1,
@@ -63,20 +24,21 @@
         "backups": 1
       },
       "environment": {
-        "STARTUP_CMD": "npm start",
-        "NODE_VERSION": "18"
+        "AUTO_UPDATE": "1",
+        "USER_UPLOAD": "1",
+        "MAIN_FILE": "index.js"
       }
     },
     "python": {
-      "egg": 16,
-      "docker_image": "ghcr.io/pterodactyl/yolks:python_3.9",
-      "startup": "python3 app.py",
+      "egg": 17,
+      "docker_image": "ghcr.io/parkervcp/yolks:python_3.13",
+      "startup": "if [[ -d .git ]] && [[ \"{{AUTO_UPDATE}}\" == \"1\" ]]; then git pull; fi; if [[ ! -z \"{{PY_PACKAGES}}\" ]]; then pip install -U --prefix .local {{PY_PACKAGES}}; fi; if [[ -f /home/container/${REQUIREMENTS_FILE} ]]; then pip install -U --prefix .local -r ${REQUIREMENTS_FILE}; fi; /usr/local/bin/python /home/container/{{PY_FILE}}",
       "limits": {
         "memory": 1024,
-        "swap": 0,
         "disk": 2048,
+        "cpu": 100,
         "io": 500,
-        "cpu": 100
+        "swap": 0
       },
       "feature_limits": {
         "databases": 1,
@@ -84,8 +46,10 @@
         "backups": 1
       },
       "environment": {
-        "STARTUP_FILE": "app.py",
-        "PYTHON_VERSION": "3.9"
+        "USER_UPLOAD": "1",
+        "AUTO_UPDATE": "1",
+        "REQUIREMENTS_FILE": "requirements.txt",
+        "PY_FILE": "app.py"
       }
     }
   }

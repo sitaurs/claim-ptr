@@ -4,6 +4,13 @@ const path = require('path');
 
 const ADMIN_FILE_PATH = path.join(__dirname, '../data/admin.json');
 
+function toAdminArray(data) {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === 'object' && data.username) return [data];
+  return [];
+}
+
 // Fungsi untuk memverifikasi kredensial admin
 async function verifyAdminCredentials(username, password) {
   try {
@@ -14,9 +21,10 @@ async function verifyAdminCredentials(username, password) {
     }
     
     // Membaca data admin dari file
-    const adminData = await fs.readJson(ADMIN_FILE_PATH);
+    const raw = await fs.readJson(ADMIN_FILE_PATH);
+    const adminData = toAdminArray(raw);
     
-    console.log(`Verifikasi admin: ${username}, data admin:`, JSON.stringify(adminData));
+    console.log(`Verifikasi admin: ${username}, data admin:`, JSON.stringify(Array.isArray(raw) ? raw : adminData));
     
     // Mencari admin dengan username yang sesuai
     const admin = adminData.find(admin => admin.username === username);
@@ -46,7 +54,8 @@ async function verifyAdminCredentials(username, password) {
 async function changeAdminPassword(adminId, currentPassword, newPassword) {
   try {
     // Membaca data admin dari file
-    const adminData = await fs.readJson(ADMIN_FILE_PATH);
+    const raw = await fs.readJson(ADMIN_FILE_PATH);
+    const adminData = toAdminArray(raw);
     
     // Mencari admin dengan ID yang sesuai
     const adminIndex = adminData.findIndex(admin => admin.id === adminId);
@@ -71,7 +80,7 @@ async function changeAdminPassword(adminId, currentPassword, newPassword) {
     adminData[adminIndex].updatedAt = new Date().toISOString();
     
     // Menyimpan kembali ke file
-    await fs.writeJson('./data/admin.json', adminData, { spaces: 2 });
+    await fs.writeJson(ADMIN_FILE_PATH, adminData, { spaces: 2 });
     
     return { success: true, message: 'Password berhasil diubah' };
   } catch (error) {
@@ -111,5 +120,31 @@ async function resetAdminPassword() {
 module.exports = {
   verifyAdminCredentials,
   changeAdminPassword,
-  resetAdminPassword
+  resetAdminPassword,
+  changeAdminCredentials // new export
 };
+
+// Fungsi untuk ubah username/password
+async function changeAdminCredentials(adminId, currentPassword, newUsername, newPassword) {
+  try {
+    const raw = await fs.readJson(ADMIN_FILE_PATH).catch(() => []);
+    const admins = toAdminArray(raw);
+    const idx = admins.findIndex(a => a.id === adminId);
+    if (idx === -1) return { success: false, message: 'Admin tidak ditemukan' };
+    const admin = admins[idx];
+    const match = await bcrypt.compare(currentPassword, admin.password);
+    if (!match) return { success: false, message: 'Password saat ini salah' };
+
+    if (newUsername && newUsername.trim()) {
+      admin.username = newUsername.trim();
+    }
+    if (newPassword && newPassword.trim()) {
+      admin.password = await bcrypt.hash(newPassword, 10);
+    }
+    admin.updatedAt = new Date().toISOString();
+    await fs.writeJson(ADMIN_FILE_PATH, admins, { spaces: 2 });
+    return { success: true, message: 'Credensial berhasil diubah' };
+  } catch (err) {
+    return { success: false, message: err.message };
+  }
+}

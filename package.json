@@ -5,11 +5,14 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js",
-    "start-bot": "node whatsapp/start-bot.js",
-    "dev-bot": "node whatsapp/start-bot.js",
+    "dev": "nodemon index.js",
+    "start-bot": "node whatsapp/start-bot.js --force-start",
+    "dev-bot": "node whatsapp/start-bot.js --force-start",
     "start-all": "concurrently \"npm run start\" \"npm run start-bot\"",
-    "dev-all": "concurrently \"npm run start\" \"npm run start-bot\""
+    "dev-all": "concurrently \"npm run dev\" \"npm run start-bot\"",
+    "test": "jest --runInBand",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.5.0",
@@ -27,6 +30,13 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "@playwright/test": "^1.45.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/tests"]
   }
 }

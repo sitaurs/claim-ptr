@@ -12,21 +12,22 @@ router.get('/config', requireAdminAuth, async (req, res) => {
     res.render('admin/config', { 
       config,
       success: req.query.success || null,
-      error: req.query.error || null 
+      error: req.query.error || null,
+      active: 'config'
     });
   } catch (error) {
     console.error('Error loading config page:', error);
     res.render('admin/config', { 
       config: {
-        server: { port: 3000, admin_session_secret: '' },
-        pterodactyl: { panel_url: '', api_key: '' },
+        server: { admin_session_secret: '' },
         whatsapp: { group_id: '', auto_start: false, admin_commands: [] },
         server_templates: {
           nodejs: { egg: 15, docker_image: '', startup: '', limits: { memory: 1024, disk: 2048, cpu: 100, io: 500 } },
           python: { egg: 16, docker_image: '', startup: '', limits: { memory: 1024, disk: 2048, cpu: 100, io: 500 } }
         }
       },
-      error: 'Gagal memuat konfigurasi' 
+      error: 'Gagal memuat konfigurasi',
+      active: 'config'
     });
   }
 });
@@ -128,7 +129,7 @@ router.post('/template/:type', requireAdminAuth, async (req, res) => {
     const templateData = {
       egg: parseInt(egg),
       docker_image,
-      startup,
+      ...(startup && startup.trim() ? { startup } : {}),
       limits: {
         memory: parseInt(memory),
         disk: parseInt(disk),

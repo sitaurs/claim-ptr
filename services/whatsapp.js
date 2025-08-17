@@ -1,3 +1,4 @@
+require('dotenv').config();
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
@@ -32,7 +33,7 @@ try {
   whatsappServiceLog('ERROR', 'Error membaca file konfigurasi', { error: error.message });
   config = {
     server: { admin_session_secret: process.env.ADMIN_SESSION_SECRET || 'default-secret' },
-    whatsapp: { group_id: process.env.WHATSAPP_GROUP_ID }
+    whatsapp: { group_id: '' }
   };
 }
 
@@ -51,7 +52,7 @@ async function sendMessage(to, message) {
     const response = await axios.post(`${BOT_API_URL}/send-message`, {
       to,
       message,
-      adminKey: config.server.admin_session_secret
+      adminKey: process.env.ADMIN_SESSION_SECRET || 'default-secret'
     }, {
       timeout: 10000 // 10 second timeout
     });
@@ -83,7 +84,7 @@ async function sendOTP(to, otp) {
     const response = await axios.post(`${BOT_API_URL}/send-otp`, {
       to,
       otp,
-      adminKey: config.server.admin_session_secret
+      adminKey: process.env.ADMIN_SESSION_SECRET || 'default-secret'
     }, {
       timeout: 10000 // 10 second timeout
     });
@@ -115,14 +116,14 @@ async function sendOTP(to, otp) {
  */
 async function sendAccountDetails(to, email, password, serverName, serverType, panelUrl) {
   try {
-    const response = await axios.post(`${BOT_API_URL}/send-account`, {
+    const response = await axios.post(`${BOT_API_URL}/send-account-details`, {
       to,
       email,
       password,
       serverName,
       serverType,
-      panelUrl: panelUrl || config.pterodactyl.panel_url,
-      adminKey: config.server.admin_session_secret
+      panelUrl: panelUrl || process.env.PANEL_URL,
+      adminKey: process.env.ADMIN_SESSION_SECRET || 'default-secret'
     });
     
     return response.data.success;
@@ -140,7 +141,7 @@ async function sendPromotion(message) {
   try {
     const response = await axios.post(`${BOT_API_URL}/send-promotion`, {
       message,
-      adminKey: config.server.admin_session_secret
+      adminKey: process.env.ADMIN_SESSION_SECRET || 'default-secret'
     });
     
     return response.data.success;
@@ -160,7 +161,7 @@ async function executeAdminCommand(command, params = {}) {
     const response = await axios.post(`${BOT_API_URL}/admin-command`, {
       command,
       params,
-      adminKey: config.server.admin_session_secret
+      adminKey: process.env.ADMIN_SESSION_SECRET || 'default-secret'
     });
     
     return response.data;

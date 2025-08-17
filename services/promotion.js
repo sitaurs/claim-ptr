@@ -118,13 +118,12 @@ async function togglePromotion(id) {
   }
 }
 
-// Fungsi untuk memuat dan menjadwalkan promosi
-function loadAndSchedulePromotions() {
+// Fungsi untuk memuat ulang jadwal promosi pada service bot
+async function loadAndSchedulePromotions() {
   try {
-    // Fungsi ini akan memanggil fungsi di bot.js
-    // Kita perlu mengimpor ulang untuk mendapatkan versi terbaru
-    const { initWhatsApp } = require('../whatsapp/bot');
-    initWhatsApp();
+    const axios = require('axios');
+    const botBase = (process.env.BOT_API_URL || 'http://localhost:3001').replace(/\/+$/, '');
+    await axios.post(`${botBase}/api/bot/reload-promotions`, {}, { timeout: 5000 });
     return true;
   } catch (error) {
     console.error('Error menjadwalkan promosi:', error);

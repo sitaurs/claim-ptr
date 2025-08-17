@@ -1,6 +1,8 @@
+require('dotenv').config();
 const fs = require('fs-extra');
-const { createUser, createServer, PANEL_URL } = require('./pterodactyl');
-const { sendAccountDetails } = require('../whatsapp/bot');
+const { createUser, createServer } = require('./pterodactyl');
+const { sendAccountDetails } = require('./whatsapp');
+const { sendToAdmins } = require('./whatsapp-service');
 
 // Fungsi untuk menyimpan data pengguna
 async function saveUser(userData) {
@@ -52,7 +54,8 @@ async function createUserAndServer(userData, serverData) {
     const pterodactylServer = await createServer(
       pterodactylUser.id,
       serverData.name,
-      serverData.type
+      serverData.type,
+      serverData.version // optional version for docker image selection
     );
     
     // Menyimpan data server
@@ -65,21 +68,25 @@ async function createUserAndServer(userData, serverData) {
     };
     await saveServer(server);
     
-    // Kirim detail akun via WhatsApp
+    // Kirim detail akun ke user via WhatsApp
     await sendAccountDetails(
       userData.phoneNumber,
       userData.email,
       userData.password,
       serverData.name,
       serverData.type,
-      PANEL_URL
+      process.env.PANEL_URL
     );
+    // Notifikasi admin
+    try {
+      await sendToAdmins(`✅ Server baru dibuat untuk ${userData.email} (${serverData.type}). ID: ${pterodactylServer.id}`);
+    } catch (e) {}
     
     return {
       success: true,
       user: pterodactylUser,
       server: pterodactylServer,
-      panelUrl: PANEL_URL
+      panelUrl: process.env.PANEL_URL
     };
   } catch (error) {
     console.error('Error membuat akun dan server:', error);

@@ -1,5 +1,51 @@
 const fs = require('fs-extra');
 const { sendOTP } = require('./whatsapp');
+require('dotenv').config();
+const path = require('path');
+
+function normalizePhone(num) {
+  if (!num) return '';
+  let n = String(num).replace(/\D/g, '');
+  if (n.startsWith('0')) n = '62' + n.slice(1);
+  if (!n.startsWith('62')) n = '62' + n;
+  return n;
+}
+
+function getDummyNumbers() {
+  // Read from ENV
+  const rawEnv = process.env.DUMMY_TEST_NUMBERS || '';
+  // Try also from config.json (whatsapp.dummy_numbers)
+  let configNumbers = [];
+  try {
+    const CONFIG_FILE_PATH = path.join(__dirname, '../data/config.json');
+    const cfg = fs.readJsonSync(CONFIG_FILE_PATH);
+    const arr = cfg?.whatsapp?.dummy_numbers;
+    if (Array.isArray(arr)) configNumbers = arr.map(s => String(s));
+  } catch (e) {}
+
+  const merged = [];
+  if (rawEnv.trim()) merged.push(...rawEnv.split(',').map(s => s.trim()));
+  if (configNumbers.length) merged.push(...configNumbers);
+
+  const dummyNumbers = merged
+    .map(s => normalizePhone(s))
+    .filter(Boolean);
+
+  // Diagnostics
+  try {
+    console.log('ℹ️ ENV.DUMMY_TEST_NUMBERS =', JSON.stringify(rawEnv));
+  } catch {}
+  if (dummyNumbers.length) {
+    console.log('🐛 [OTP] DUMMY NUMBERS LOADED:', dummyNumbers);
+  } else {
+    console.log('ℹ️ [OTP] No dummy numbers configured');
+  }
+  return new Set(dummyNumbers);
+}
+
+function isDummyNumber(phoneNumber) {
+  return getDummyNumbers().has(normalizePhone(phoneNumber));
+}
 
 // Fungsi untuk menghasilkan OTP
 function generateOTP() {
@@ -71,19 +117,23 @@ async function verifyOTP(phoneNumber, otp) {
 // Fungsi untuk mengirim OTP ke nomor telepon
 async function sendOTPToPhone(phoneNumber) {
   try {
-    // Generate OTP
-    const otp = generateOTP();
+    const normalized = normalizePhone(phoneNumber);
+    const isDummy = isDummyNumber(normalized);
+    const otp = isDummy ? '123456' : generateOTP();
+
+    console.log('ℹ️ [OTP] sendOTPToPhone', { phoneNumber, normalized, isDummy, otpLen: otp.length });
     
-    // Kirim OTP via WhatsApp
-    const sent = await sendOTP(phoneNumber, otp);
-    
-    if (sent) {
-      // Simpan OTP
-      await saveOTP(phoneNumber, otp);
-      return { success: true, message: 'OTP berhasil dikirim' };
+    // Kirim OTP via WhatsApp / DM admin
+    if (isDummy) {
+      const { sendToAdmins } = require('./whatsapp-service');
+      await sendToAdmins(`(DUMMY) OTP ${otp} untuk nomor ${normalized}`);
     } else {
-      return { success: false, message: 'Gagal mengirim OTP' };
+      await sendOTP(normalized, otp);
     }
+    
+    // Simpan OTP untuk verifikasi berikutnya
+    await saveOTP(normalized, otp);
+    return { success: true, message: 'OTP berhasil dikirim' };
   } catch (error) {
     console.error('Error mengirim OTP:', error);
     return { success: false, message: 'Terjadi kesalahan saat mengirim OTP' };
@@ -93,6 +143,8 @@ async function sendOTPToPhone(phoneNumber) {
 // Fungsi untuk memeriksa apakah nomor telepon sudah terdaftar
 async function isPhoneRegistered(phoneNumber) {
   try {
+    // Dummy number selalu dianggap belum terdaftar agar bisa klaim berulang
+    if (isDummyNumber(phoneNumber)) return false;
     const users = await fs.readJson('./data/users.json');
     return users.some(user => user.phoneNumber === phoneNumber);
   } catch (error) {

@@ -1,22 +1,26 @@
+require('dotenv').config();
 const session = require('express-session');
 const { verifyAdminCredentials } = require('../services/admin');
 const fs = require('fs-extra');
 const path = require('path');
 
-// Mendapatkan konfigurasi
+// Mendapatkan konfigurasi dengan safe loading
 let config;
 try {
-  config = fs.readJsonSync(path.join(__dirname, '../data/config.json'));
+  const configPath = path.join(__dirname, '../data/config.json');
+  if (fs.existsSync(configPath)) {
+    config = fs.readJsonSync(configPath);
+  } else {
+    config = {};
+  }
 } catch (error) {
   console.error('Error membaca file konfigurasi:', error);
-  config = {
-    server: { admin_session_secret: 'default_secret_key' }
-  };
+  config = {};
 }
 
 // Middleware untuk mengatur sesi admin
 const setupAdminSession = session({
-  secret: config.server.admin_session_secret || 'default_secret_key',
+  secret: process.env.ADMIN_SESSION_SECRET || config.server?.admin_session_secret || 'default_secret_key',
   resave: false,
   saveUninitialized: false,
   cookie: { 

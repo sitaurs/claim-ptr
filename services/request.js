@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const { sendJsonRequestNotification } = require('./whatsapp');
+const { sendJsonRequestNotification } = require('./whatsapp-service');
 
 const REQUESTS_FILE_PATH = path.join(__dirname, '../data/requests.json');
 

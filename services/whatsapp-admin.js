@@ -1,5 +1,6 @@
 const fs = require('fs-extra');
 const { getConfig } = require('./config');
+const { getGroupConfig, setGroupConfig } = require('./welcome-config'); // ADD after other requires
 
 // Function untuk logging dengan timestamp
 function adminLog(level, message, data = null) {
@@ -19,6 +20,11 @@ function adminLog(level, message, data = null) {
   if (data) {
     console.log('📊 Data:', JSON.stringify(data, null, 2));
   }
+}
+
+function ensureGroupCfg(jid) {
+  const cfg = getGroupConfig(jid);
+  return cfg;
 }
 
 /**
@@ -140,11 +146,12 @@ async function executeAdminCommand(command, from, message, sendMessage) {
           adminLog('WARNING', 'Broadcast command missing message');
           response = `*❌ ERROR*\n\nFormat: !broadcast <pesan>`;
         } else {
-          adminLog('INFO', `Broadcasting message to group: ${config.whatsapp.group_id}`, {
+          const targetGroup = (config.whatsapp && config.whatsapp.group_id) ? (config.whatsapp.group_id.includes('@g.us') ? config.whatsapp.group_id : config.whatsapp.group_id + '@g.us') : '';
+          adminLog('INFO', `Broadcasting message to group: ${targetGroup}`, {
             messageLength: broadcastMessage.length
           });
           // Kirim broadcast ke grup
-          await sendMessage(config.whatsapp.group_id, `*📢 BROADCAST ADMIN*\n\n${broadcastMessage}`);
+          await sendMessage(targetGroup, `*📢 BROADCAST ADMIN*\n\n${broadcastMessage}`);
           response = `*✅ SUCCESS*\n\nBroadcast berhasil dikirim ke grup.`;
           adminLog('SUCCESS', 'Broadcast sent successfully');
         }
@@ -192,6 +199,37 @@ async function executeAdminCommand(command, from, message, sendMessage) {
           process.exit(0); // Bot akan restart jika menggunakan process manager
         }, 3000);
         return true;
+
+      case '!welcome': {
+        if (!from.endsWith('@g.us')) {
+          response = 'Perintah ini hanya bisa di grup.'; break; }
+        const mode = (message.split(' ')[1] || '').toLowerCase();
+        if (!['on','off'].includes(mode)) { response = 'Format: !welcome on|off'; break; }
+        setGroupConfig(from, { on: mode==='on' });
+        response = `Welcome/Bye di grup ini: ${mode.toUpperCase()}`;
+        break;
+      }
+      case '!welcomemsg': {
+        if (!from.endsWith('@g.us')) { response='Perintah ini hanya di grup'; break; }
+        const teks = message.replace('!welcomemsg','').trim();
+        if (!teks) { response='Format: !welcomemsg <teks>'; break; }
+        setGroupConfig(from, { welcome: teks });
+        response='Template welcome diperbarui.'; break;
+      }
+      case '!byemsg': {
+        if (!from.endsWith('@g.us')) { response='Perintah ini hanya di grup'; break; }
+        const teks = message.replace('!byemsg','').trim();
+        if (!teks) { response='Format: !byemsg <teks>'; break; }
+        setGroupConfig(from, { bye: teks });
+        response='Template bye diperbarui.'; break;
+      }
+      case '!tagalljoin': {
+        if (!from.endsWith('@g.us')) { response='Perintah ini hanya di grup'; break; }
+        const mode = (message.split(' ')[1] || '').toLowerCase();
+        if (!['on','off'].includes(mode)) { response='Format: !tagalljoin on|off'; break; }
+        setGroupConfig(from, { tagAllOnJoin: mode==='on' });
+        response=`Tag @all saat join: ${mode.toUpperCase()}`; break;
+      }
 
       default:
         adminLog('WARNING', `Unknown command received: ${command}`);
@@ -307,24 +345,29 @@ async function sendNewRequestNotification(requestData, sendMessage) {
                    `⚡ Admin Commands:\n` +
                    `• !approve ${requestData.id}\n` +
                    `• !reject ${requestData.id}`;
-    
-    adminLog('INFO', `Sending notification to group: ${config.whatsapp.group_id}`);
-    await sendMessage(config.whatsapp.group_id, message);
-    adminLog('SUCCESS', 'Request notification sent successfully');
-    return true;
+
+    // Kirim ke semua admin (DM)
+    const adminNumbers = Array.isArray(config?.whatsapp?.admin_numbers) ? config.whatsapp.admin_numbers : (config?.whatsapp?.admin_number ? [config.whatsapp.admin_number] : []);
+    for (const adminNum of adminNumbers.filter(Boolean)) {
+      try {
+        await sendMessage(adminNum, message);
+      } catch (e) {
+        adminLog('ERROR', 'Failed sending notification to admin', { adminNum, error: e.message });
+      }
+    }
+
+    return { success: true };
   } catch (error) {
-    adminLog('ERROR', 'Failed to send request notification', {
-      error: error.message,
-      requestId: requestData?.id,
-      stack: error.stack
-    });
-    return false;
+    adminLog('ERROR', 'Failed sending new request notification', { error: error.message });
+    return { success: false, message: error.message };
   }
 }
 
+// Ekspor fungsi
+
 module.exports = {
   executeAdminCommand,
-  sendNewRequestNotification,
   approveN8NRequest,
-  rejectN8NRequest
+  rejectN8NRequest,
+  sendNewRequestNotification,
 };

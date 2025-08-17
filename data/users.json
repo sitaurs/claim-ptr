@@ -1,1 +1,29 @@
-[]
+[
+  {
+    "phoneNumber": "6280000000002",
+    "email": "acc@test.local",
+    "password": "pass123",
+    "firstName": "Acc",
+    "lastName": "Test",
+    "pterodactylId": 101,
+    "createdAt": "2025-08-17T02:06:05.516Z"
+  },
+  {
+    "phoneNumber": "6280000000009",
+    "email": "test1@mail.c",
+    "password": "asdasdasd",
+    "firstName": "test",
+    "lastName": "1",
+    "pterodactylId": 23,
+    "createdAt": "2025-08-17T07:54:45.922Z"
+  },
+  {
+    "phoneNumber": "6280000000009",
+    "email": "test2@mail.c",
+    "password": "asdasdasd",
+    "firstName": "test",
+    "lastName": "2",
+    "pterodactylId": 24,
+    "createdAt": "2025-08-17T07:58:17.774Z"
+  }
+]

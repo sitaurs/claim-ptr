@@ -19,61 +19,35 @@
         <table class="min-w-full">
           <thead>
             <tr class="border-b">
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Timestamp</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Method</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">URL</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">ID</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Nama</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Email</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">WhatsApp</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Tanggal</th>
               <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Status</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Body</th>
-              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Response</th>
+              <th class="px-4 py-2 text-left text-sm font-medium text-gray-500">Aksi</th>
             </tr>
           </thead>
           <tbody>
             <% requests.forEach(function(request) { %>
               <tr class="border-b hover:bg-gray-50">
+                <td class="px-4 py-2 text-sm font-mono"><%= request.id %></td>
+                <td class="px-4 py-2 text-sm"><%= request.name %></td>
+                <td class="px-4 py-2 text-sm"><%= request.email %></td>
+                <td class="px-4 py-2 text-sm"><%= request.phoneNumber %></td>
+                <td class="px-4 py-2 text-sm"><%= request.createdAt ? new Date(request.createdAt).toLocaleString('id-ID') : '-' %></td>
                 <td class="px-4 py-2 text-sm">
-                  <%= request.timestamp ? new Date(request.timestamp).toLocaleString('id-ID') : '-' %>
-                </td>
-                <td class="px-4 py-2 text-sm">
-                  <span class="px-2 py-1 rounded text-xs <%= request.method === 'POST' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800' %>">
-                    <%= request.method || 'GET' %>
+                  <span class="px-2 py-1 rounded text-xs <%= request.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                    <%= request.status || 'pending' %>
                   </span>
                 </td>
-                <td class="px-4 py-2 text-sm font-mono text-xs">
-                  <%= request.url || '-' %>
-                </td>
                 <td class="px-4 py-2 text-sm">
-                  <% if (request.status) { %>
-                    <span class="px-2 py-1 rounded text-xs <%= request.status >= 200 && request.status < 300 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
-                      <%= request.status %>
-                    </span>
-                  <% } else { %>
-                    -
-                  <% } %>
-                </td>
-                <td class="px-4 py-2 text-sm">
-                  <% if (request.body) { %>
-                    <button 
-                      type="button" 
-                      class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 hover:bg-gray-200 transition show-json"
-                      data-json="<%= encodeURIComponent(JSON.stringify(request.body, null, 2)) %>"
-                    >
-                      View
+                  <% if (request.status !== 'completed') { %>
+                  <button type="button" class="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded complete-btn" data-id="<%= request.id %>">
+                    Selesai
                     </button>
                   <% } else { %>
-                    -
-                  <% } %>
-                </td>
-                <td class="px-4 py-2 text-sm">
-                  <% if (request.response) { %>
-                    <button 
-                      type="button" 
-                      class="px-2 py-1 rounded text-xs bg-gray-100 text-gray-800 hover:bg-gray-200 transition show-json"
-                      data-json="<%= encodeURIComponent(JSON.stringify(request.response, null, 2)) %>"
-                    >
-                      View
-                    </button>
-                  <% } else { %>
-                    -
+                  <span class="text-xs text-gray-500">Sudah selesai</span>
                   <% } %>
                 </td>
               </tr>
@@ -87,19 +61,35 @@
   </div>
 </div>
 
-<!-- JSON Modal -->
-<div id="jsonModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-  <div class="bg-white rounded-lg max-w-4xl max-h-[80vh] w-full mx-4 overflow-hidden">
+<!-- Complete Modal -->
+<div id="completeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg max-w-md w-full mx-4 overflow-hidden">
     <div class="flex justify-between items-center p-4 border-b">
-      <h4 class="text-lg font-semibold">JSON Data</h4>
-      <button id="closeModal" class="text-gray-500 hover:text-gray-700">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
+      <h4 class="text-lg font-semibold">Selesaikan Request N8n</h4>
+      <button id="closeCompleteModal" class="text-gray-500 hover:text-gray-700">✕</button>
     </div>
-    <div class="p-4 overflow-auto max-h-96">
-      <pre id="jsonContent" class="bg-gray-100 p-4 rounded text-sm overflow-auto"></pre>
+    <div class="p-4 space-y-3">
+      <input type="hidden" id="completeId">
+      <div>
+        <label class="block text-sm text-gray-700 mb-1">URL N8n</label>
+        <input type="text" id="n8nUrl" class="w-full px-3 py-2 border rounded" placeholder="https://n8n.domain.com" />
+      </div>
+      <div>
+        <label class="block text-sm text-gray-700 mb-1">Username</label>
+        <input type="text" id="n8nUser" class="w-full px-3 py-2 border rounded" />
+      </div>
+      <div>
+        <label class="block text-sm text-gray-700 mb-1">Password</label>
+        <input type="text" id="n8nPass" class="w-full px-3 py-2 border rounded" />
+      </div>
+      <div>
+        <label class="block text-sm text-gray-700 mb-1">Catatan (opsional)</label>
+        <textarea id="n8nNote" class="w-full px-3 py-2 border rounded" rows="3" placeholder="Catatan tambahan"></textarea>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="cancelComplete" class="px-3 py-1 rounded border">Batal</button>
+        <button id="submitComplete" class="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white">Kirim & Tandai Selesai</button>
+      </div>
     </div>
   </div>
 </div>
@@ -133,27 +123,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Show JSON modal
-  document.querySelectorAll('.show-json').forEach(button => {
-    button.addEventListener('click', function() {
-      const jsonData = decodeURIComponent(this.dataset.json);
-      document.getElementById('jsonContent').textContent = jsonData;
-      document.getElementById('jsonModal').classList.remove('hidden');
-      document.getElementById('jsonModal').classList.add('flex');
-    });
+  // Complete flow handlers
+  const openModal = (id) => {
+    document.getElementById('completeId').value = id;
+    document.getElementById('completeModal').classList.remove('hidden');
+    document.getElementById('completeModal').classList.add('flex');
+  };
+  const closeModal = () => {
+    document.getElementById('completeModal').classList.add('hidden');
+    document.getElementById('completeModal').classList.remove('flex');
+  };
+
+  document.querySelectorAll('.complete-btn').forEach(btn => {
+    btn.addEventListener('click', () => openModal(btn.dataset.id));
   });
-  
-  // Close modal
-  document.getElementById('closeModal').addEventListener('click', function() {
-    document.getElementById('jsonModal').classList.add('hidden');
-    document.getElementById('jsonModal').classList.remove('flex');
-  });
-  
-  // Close modal on backdrop click
-  document.getElementById('jsonModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-      this.classList.add('hidden');
-      this.classList.remove('flex');
+  document.getElementById('closeCompleteModal').addEventListener('click', closeModal);
+  document.getElementById('cancelComplete').addEventListener('click', closeModal);
+  document.getElementById('completeModal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+  document.getElementById('submitComplete').addEventListener('click', async function() {
+    const id = document.getElementById('completeId').value;
+    const n8nUrl = document.getElementById('n8nUrl').value.trim();
+    const username = document.getElementById('n8nUser').value.trim();
+    const password = document.getElementById('n8nPass').value.trim();
+    const note = document.getElementById('n8nNote').value.trim();
+
+    if (!n8nUrl || !username || !password) {
+      alert('Mohon isi URL, username, dan password');
+      return;
+    }
+
+    try {
+      const resp = await fetch(`/admin/n8n/${id}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ n8nUrl, username, password, note })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        closeModal();
+        location.reload();
+      } else {
+        alert(data.message || 'Gagal menandai selesai');
+      }
+    } catch (e) {
+      alert(e.message);
     }
   });
 });

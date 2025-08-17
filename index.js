@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -68,12 +69,7 @@ if (!fs.existsSync('./data/config.json')) {
   log('ERROR', 'Config file not found! Creating default config...');
   const defaultConfig = {
     server: {
-      port: 3000,
-      admin_session_secret: 'zamani-zamani-fahri-zamani'
-    },
-    pterodactyl: {
-      panel_url: 'https://panel.example.com',
-      api_key: 'your-api-key'
+      admin_session_secret: process.env.ADMIN_SESSION_SECRET || 'zamani-zamani-fahri-zamani'
     },
     whatsapp: {
       group_id: '',
@@ -139,14 +135,14 @@ let serverConfig;
 // Mendapatkan konfigurasi server
 try {
   log('INFO', 'Loading server configuration...');
-  serverConfig = fs.readJsonSync('./data/config.json').server;
+  serverConfig = (fs.readJsonSync('./data/config.json').server) || {};
   log('SUCCESS', 'Server config loaded', serverConfig);
 } catch (error) {
   log('ERROR', 'Error loading server config, using defaults', error.message);
-  serverConfig = { port: 3000 };
+  serverConfig = {};
 }
 
-const PORT = serverConfig.port || 3000;
+const PORT = process.env.PORT || serverConfig.port || 3000;
 log('INFO', `Server will start on port: ${PORT}`);
 
 log('INFO', 'Setting up middleware...');
@@ -224,11 +220,15 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
-log('INFO', 'Starting HTTP server...');
-app.listen(PORT, () => {
-  log('SUCCESS', `🌐 Backend server running at http://localhost:${PORT}`);
-  log('INFO', '📝 Admin Panel: http://localhost:' + PORT + '/admin');
-  log('INFO', '🔑 Default Login: admin / admin123');
-  log('INFO', '🤖 To start WhatsApp Bot: npm run dev-bot');
-  log('INFO', '🚀 Server started successfully!');
-});
+if (require.main === module) {
+  log('INFO', 'Starting HTTP server...');
+  app.listen(PORT, async () => {
+    log('SUCCESS', `🌐 Backend server running at http://localhost:${PORT}`);
+    log('INFO', '📝 Admin Panel: http://localhost:' + PORT + '/admin');
+    log('INFO', '🔑 Default Login: admin / admin123');
+    log('INFO', '🤖 To start WhatsApp Bot: npm run dev-bot');
+    log('INFO', '🚀 Server started successfully!');
+  });
+}
+
+module.exports = app;

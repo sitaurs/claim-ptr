@@ -1,0 +1,30 @@
+{
+  "watch": [
+    "*.js",
+    "routes/**/*.js",
+    "services/**/*.js",
+    "middleware/**/*.js"
+  ],
+  "ignore": [
+    "node_modules/**/*",
+    "whatsapp/auth/**/*",
+    "data/**/*",
+    "public/**/*",
+    "views/**/*",
+    "tests/**/*",
+    "e2e/**/*",
+    "test-results/**/*",
+    "LEXZY/**/*",
+    "*.json",
+    "*.md",
+    "*.txt",
+    "*.rar",
+    "*.zip",
+    "*.tar.gz"
+  ],
+  "ext": "js",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": 2000
+}

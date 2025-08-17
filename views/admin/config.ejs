@@ -1,4 +1,4 @@
-<%- include('_head', { title: 'Konfigurasi' }) %>
+<%- include('_head', { title: 'Konfigurasi', active: active }) %>
 
 <div class="min-h-screen bg-gray-100">
   <!-- Navigation -->
@@ -31,27 +31,13 @@
       </div>
       <div class="p-4">
         <form action="/admin/config" method="POST" class="space-y-4">
-          <!-- Pterodactyl Configuration -->
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <h4 class="text-lg font-medium text-gray-900 mb-4">Pterodactyl Panel</h4>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-gray-700 font-medium mb-2">Panel URL</label>
-                <input type="text" name="pterodactyl.panel_url" value="<%= config.pterodactyl?.panel_url || '' %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://panel.domain.com" required />
-              </div>
-              <div>
-                <label class="block text-gray-700 font-medium mb-2">Application API Key</label>
-                <input type="text" name="pterodactyl.application_api_key" value="<%= config.pterodactyl?.application_api_key || '' %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ptla_..." required />
-              </div>
-              <div>
-                <label class="block text-gray-700 font-medium mb-2">Default Location ID</label>
-                <input type="number" name="pterodactyl.location_id" value="<%= config.pterodactyl?.location_id || '' %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1" required />
-              </div>
-              <div>
-                <label class="block text-gray-700 font-medium mb-2">Default Node ID</label>
-                <input type="number" name="pterodactyl.node_id" value="<%= config.pterodactyl?.node_id || '' %>" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="1" required />
-              </div>
-            </div>
+          <!-- Info Panel -->
+          <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <h4 class="text-lg font-medium text-blue-900 mb-2">📋 Informasi Konfigurasi</h4>
+            <p class="text-blue-700">
+              <strong>Panel URL & API Key:</strong> Dikonfigurasi di file <code>.env</code><br>
+              <strong>Template Server:</strong> Dikonfigurasi di form ini (CPU, RAM, Disk, Egg ID, dll)
+            </p>
           </div>
 
           <!-- WhatsApp Configuration -->

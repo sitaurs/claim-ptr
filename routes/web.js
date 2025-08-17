@@ -4,8 +4,10 @@ const fs = require('fs-extra');
 const { requireAdminAuth, adminLogin, adminLogout } = require('../middleware/auth');
 
 // Include admin routes
-const adminRequestsRouter = require('./admin/requests');
 const adminConfigRouter = require('./admin/config');
+const adminN8nApiRouter = require('./admin/n8n');
+const adminFlushRouter = require('./admin/flush');
+const adminAccountRouter = require('./admin/account');
 
 // Halaman utama
 router.get('/', (req, res) => {
@@ -104,7 +106,8 @@ router.get('/admin/dashboard', requireAdminAuth, async (req, res) => {
       latestUsers,
       latestServers,
       success: req.query.success || null,
-      error: req.query.error || null
+      error: req.query.error || null,
+      active: 'dashboard'
     });
   } catch (error) {
     console.error('Error loading dashboard:', error);
@@ -114,7 +117,8 @@ router.get('/admin/dashboard', requireAdminAuth, async (req, res) => {
       n8nRequestCount: 0,
       latestUsers: [],
       latestServers: [],
-      error: 'Gagal memuat data dashboard'
+      error: 'Gagal memuat data dashboard',
+      active: 'dashboard'
     });
   }
 });
@@ -128,11 +132,12 @@ router.get('/admin/promotions', requireAdminAuth, async (req, res) => {
       promotions,
       groupId: (config.whatsapp && config.whatsapp.group_id) || '',
       success: req.query.success || null,
-      error: req.query.error || null 
+      error: req.query.error || null,
+      active: 'promotions'
     });
   } catch (error) {
     console.error('Error loading promotions page:', error);
-    res.render('admin/promotions', { promotions: [], groupId: '', error: 'Gagal memuat data promosi' });
+    res.render('admin/promotions', { promotions: [], groupId: '', error: 'Gagal memuat data promosi', active: 'promotions' });
   }
 });
 
@@ -143,28 +148,40 @@ router.get('/admin/n8n-requests', requireAdminAuth, async (req, res) => {
     res.render('admin/n8n-requests', { 
       requests,
       success: req.query.success || null,
-      error: req.query.error || null 
+      error: req.query.error || null,
+      active: 'n8n-requests'
     });
   } catch (error) {
     console.error('Error loading N8n requests page:', error);
-    res.render('admin/n8n-requests', { requests: [], error: 'Gagal memuat data permintaan N8n' });
+    res.render('admin/n8n-requests', { requests: [], error: 'Gagal memuat data permintaan N8n', active: 'n8n-requests' });
   }
 });
 
 // Halaman manajemen pengguna
 router.get('/admin/users', requireAdminAuth, async (req, res) => {
   try {
-    const users = await fs.readJson('./data/users.json').catch(() => []);
+    let usersRaw = await fs.readJson('./data/users.json').catch(() => []);
     const servers = await fs.readJson('./data/servers.json').catch(() => []);
+
+    // Normalise struktur data agar memiliki field name, phone, status
+    const users = Array.isArray(usersRaw) ? usersRaw.map(u => ({
+      name: [u.firstName, u.lastName].filter(Boolean).join(' ').trim() || '-',
+      phone: u.phone || u.phoneNumber || u.phone_number || '-',
+      email: u.email || '-',
+      status: u.status || (u.pterodactylId ? 'verified' : 'pending'),
+      createdAt: u.createdAt || u.registeredAt || null
+    })) : [];
+
     res.render('admin/users', { 
       users, 
       servers,
       success: req.query.success || null,
-      error: req.query.error || null 
+      error: req.query.error || null,
+      active: 'users'
     });
   } catch (error) {
     console.error('Error loading users page:', error);
-    res.render('admin/users', { users: [], servers: [], error: 'Gagal memuat data pengguna' });
+    res.render('admin/users', { users: [], servers: [], error: 'Gagal memuat data pengguna', active: 'users' });
   }
 });
 
@@ -175,19 +192,23 @@ router.get('/admin/server-templates', requireAdminAuth, async (req, res) => {
     res.render('admin/server-templates', { 
       config,
       success: req.query.success || null,
-      error: req.query.error || null 
+      error: req.query.error || null,
+      active: 'server-templates'
     });
   } catch (error) {
     console.error('Error loading server templates page:', error);
     res.render('admin/server-templates', { 
       config: { server_templates: { nodejs: {}, python: {} } }, 
-      error: 'Gagal memuat konfigurasi template server' 
+      error: 'Gagal memuat konfigurasi template server',
+      active: 'server-templates'
     });
   }
 });
 
 // Admin sub-routes
-router.use('/admin', adminRequestsRouter);
 router.use('/admin', adminConfigRouter);
+router.use('/admin', adminN8nApiRouter);
+router.use('/admin', adminFlushRouter);
+router.use('/admin', adminAccountRouter);
 
 module.exports = router;
